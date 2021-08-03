@@ -1,0 +1,16 @@
+{
+  "name": "douyin7.27",
+  "version": "1.0.0",
+  "description": "",
+  "main": "douyin.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "skygongque",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "superagent": "^6.1.0"
+  }
+}
