@@ -16,7 +16,7 @@ def get_desc_vid(aweme_id):
         url='https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids={}&dytk='.format(aweme_id), headers=headers,
         timeout=5).text
     response_json = json.loads(response)
-    desc = re.sub('[\/:*?"<>|\n]', '', response_json['item_list'][0]['desc'])
+    desc = re.sub('[\\/:*?"<>|\n]', '', response_json['item_list'][0]['desc'])
     vid = response_json['item_list'][0]['video']['vid']
     return desc, vid
 
@@ -30,9 +30,10 @@ def update_user_videos(user, videos):
 
 def download_new_videos(user, number):
     path = 'F:/douyin/' + user
-    videos = open(f'followers/{user}.txt', encoding='utf-8').readlines()[:number]
+    videos = open(f'followers/{user}.txt',
+                  encoding='utf-8').readlines()[:number]
     for video in videos:
-        print(video[0:19],end='\t')
+        print(video[0:19], end='\t')
         aweme_id, vid, desc = video.rstrip().split("==")
         download_url = 'https://aweme.snssdk.com/aweme/v1/play/?video_id={' \
                        '}&line=0&ratio=720p&media_type=4&vr_type=0&improve_bitrate=0&is_play_url=1&is_support_h265=0&source' \
@@ -41,7 +42,9 @@ def download_new_videos(user, number):
         savepath = path + "/" + filename + ".mp4"
         response = requests.get(
             url=download_url,
-            headers={'User-Agent': 'Mozilla/5.0 (Android 5.1.1; Mobile; rv:68.0) Gecko/68.0 Firefox/68.0', },
+            headers={
+                'User-Agent': 'Mozilla/5.0 (Android 5.1.1; Mobile; rv:68.0) Gecko/68.0 Firefox/68.0',
+            },
             timeout=10).content
         with open(savepath, 'wb') as f:
             f.write(response)
@@ -54,9 +57,16 @@ def main():
         user, sec_uid = line.rstrip().split(':')
         f = open(f'followers/{user}.txt', encoding='utf-8')
         aweme_ids = [video[0:19] for video in f.readlines()]
-        videos = [video.rstrip() for video in open(f'followers/{user}.txt', encoding='utf-8').readlines()]
-        response = requests.get(f"https://www.douyin.com/user/{sec_uid}", headers=headers)
-        new_aweme_ids = re.findall('href="https://www.douyin.com/video/(\d{1,19})\?previous_page', response.text)
+        videos = [
+            video.rstrip() for video in open(
+                f'followers/{user}.txt',
+                encoding='utf-8').readlines()]
+        response = requests.get(
+            f"https://www.douyin.com/user/{sec_uid}",
+            headers=headers)
+        new_aweme_ids = re.findall(
+            'href="https://www.douyin.com/video/(\\d{1,19})\\?previous_page',
+            response.text)
         for new_aweme_id in new_aweme_ids:
             if new_aweme_id not in aweme_ids:
                 desc, vid = get_desc_vid(new_aweme_id)
@@ -69,6 +79,7 @@ def main():
             print(len(new_aweme_ids))
             print(f'{user}新增了{add_new}个视频')
             download_new_videos(user, add_new)
+
 
 if __name__ == '__main__':
     main()

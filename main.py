@@ -6,7 +6,12 @@ port = 3306
 database = 'douyin'
 user = 'root'
 password = '123456'
-db = pymysql.connect(host=host, port=port, db=database, user=user, password=password)
+db = pymysql.connect(
+    host=host,
+    port=port,
+    db=database,
+    user=user,
+    password=password)
 
 
 def response(flow):
@@ -15,7 +20,12 @@ def response(flow):
         with open('favorite.txt', 'a', encoding='utf-8') as f:
             for aweme in json.loads(flow.response.text)['aweme_list']:
                 if 'download_addr' in aweme['video']:
-                    f.write(aweme['aweme_id']+"=="+aweme['video']['download_addr']['uri']+"=="+aweme['desc'])
+                    f.write(
+                        aweme['aweme_id'] +
+                        "==" +
+                        aweme['video']['download_addr']['uri'] +
+                        "==" +
+                        aweme['desc'])
                     f.write('\n')
         cursor = db.cursor()
         for aweme in json.loads(flow.response.text)['aweme_list']:
@@ -28,13 +38,23 @@ def response(flow):
             author_sec_uid = aweme['author']['sec_uid']
             author_user_id = aweme['aweme_id']
             downloaded = 0
-            data = [aweme_id,desc,download_addr,create_time,aweme_type,author_nickname,author_sec_uid,author_user_id,downloaded]
-            sql = 'insert into favorites values ({data})'.format(data=str(data)[1:-1])
+            data = [
+                aweme_id,
+                desc,
+                download_addr,
+                create_time,
+                aweme_type,
+                author_nickname,
+                author_sec_uid,
+                author_user_id,
+                downloaded]
+            sql = 'insert into favorites values ({data})'.format(
+                data=str(data)[1:-1])
             print(sql)
             try:
                 cursor.execute(sql)
                 db.commit()
-            except:
+            except BaseException:
                 db.rollback()
         cursor.close()
 
@@ -62,5 +82,3 @@ def response(flow):
     #         except:
     #             db.rollback()
     #     cursor.close()
-
-

@@ -3,8 +3,8 @@ import requests
 import re
 import xlwings as xw
 import pymysql
-app=xw.App(visible=False,add_book=False)
-wb=app.books.add()
+app = xw.App(visible=False, add_book=False)
+wb = app.books.add()
 
 
 def get_data(sec_uid, signature, max_cursor):
@@ -28,9 +28,9 @@ def get_one_page(sec_uid, max_cursor):
                 aweme_id = item['aweme_id']
                 vid = item['video']['vid']
                 temp_src = item['video']['download_addr']['url_list'][0]
-                src = re.sub('&watermark=1','&watermark=0',temp_src,re.S)
-                desc = re.sub('[\/:*?"<>|\n]', '', item['desc'])
-                page_data.append([aweme_id,vid,desc,src])
+                src = re.sub('&watermark=1', '&watermark=0', temp_src, re.S)
+                desc = re.sub('[\\/:*?"<>|\n]', '', item['desc'])
+                page_data.append([aweme_id, vid, desc, src])
 
     try:
         iscontinue = data_json['has_more']
@@ -55,19 +55,19 @@ def get_videos(sec_uid):
     return all_data
 
 
-def write2txt(datas,user):
-    with open(f'followers/{user}.txt',mode='w',encoding='utf-8') as f:
+def write2txt(datas, user):
+    with open(f'followers/{user}.txt', mode='w', encoding='utf-8') as f:
         for video in datas:
-            f.write(video[0]+"=="+video[1]+"=="+video[2])
+            f.write(video[0] + "==" + video[1] + "==" + video[2])
             f.write('\n')
 
 
-def write2excel(data,user):
+def write2excel(data, user):
     active_sheet = wb.sheets.add(user)
     active_sheet.range("A:A").api.NumberFormat = "@"
     for i in range(len(data)):
         for j in range(len(data[i])):
-            active_sheet.range((i+1,j+1)).value = data[i][j]
+            active_sheet.range((i + 1, j + 1)).value = data[i][j]
 
 
 def connetmysql():
@@ -76,7 +76,12 @@ def connetmysql():
     database = 'douyin'
     user = 'root'
     password = '123456'
-    db = pymysql.connect(host=host, port=port, db=database, user=user, password=password)
+    db = pymysql.connect(
+        host=host,
+        port=port,
+        db=database,
+        user=user,
+        password=password)
     cursor = db.cursor()
     sql = f'drop table if exists followers_datas'
     cursor.execute(sql)
@@ -89,16 +94,17 @@ def connetmysql():
                     src varchar(255),
                     primary key (aweme_id))"""
     cursor.execute(create_table)
-    return db,cursor
+    return db, cursor
 
 
-def write2mysql(datas,username,db,cursor):
+def write2mysql(datas, username, db, cursor):
     for data in datas:
-        inser_sql = "insert into followers_datas values('{user}',{data})".format(user=username, data=str(data)[1:-1])
+        inser_sql = "insert into followers_datas values('{user}',{data})".format(
+            user=username, data=str(data)[1:-1])
         try:
             cursor.execute(inser_sql)
             db.commit()
-        except:
+        except BaseException:
             db.rollback()
 
 
@@ -107,20 +113,20 @@ if __name__ == "__main__":
     with open('followers.txt', encoding='utf-8') as f:
         for item in f.readlines():
             user_secid.append(item.rstrip())
-    db,cursor = connetmysql()
+    db, cursor = connetmysql()
     for item in user_secid:
-        user,sec_id = item.split(':')
-        print(user,sec_id)
+        user, sec_id = item.split(':')
+        print(user, sec_id)
         try:
             user_data = get_videos(sec_id)
         except Exception as e:
             print(e)
-            print(user+"has error")
+            print(user + "has error")
         else:
-            if len(user_data)>0:
-                write2excel(user_data,user)
-                write2txt(user_data,user)
-                write2mysql(user_data,user,db,cursor)
+            if len(user_data) > 0:
+                write2excel(user_data, user)
+                write2txt(user_data, user)
+                write2mysql(user_data, user, db, cursor)
     cursor.close()
     db.close()
     del wb.sheets['Sheet1']
