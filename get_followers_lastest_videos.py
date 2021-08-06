@@ -65,7 +65,7 @@ def main():
             f"https://www.douyin.com/user/{sec_uid}",
             headers=headers)
         new_aweme_ids = re.findall(
-            'href="https://www.douyin.com/video/(\\d{1,19})\\?previous_page',
+            'href="https://www.douyin.com/video/(\\d{1,19})',
             response.text)
         for new_aweme_id in new_aweme_ids:
             if new_aweme_id not in aweme_ids:
