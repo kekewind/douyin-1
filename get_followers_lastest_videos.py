@@ -16,11 +16,13 @@ def get_desc_vid(aweme_id):
         url='https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids={}&dytk='.format(aweme_id), headers=headers,
         timeout=5).text
     response_json = json.loads(response)
+    # 将windows中文件名不支持的字符删除
     desc = re.sub('[\\/:*?"<>|\n]', '', response_json['item_list'][0]['desc'])
     vid = response_json['item_list'][0]['video']['vid']
     return desc, vid
 
 
+# 更新文件写入新的视频
 def update_user_videos(user, videos):
     with open(f'followers/{user}.txt', mode='w', encoding='utf-8') as f:
         for video in videos:
