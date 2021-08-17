@@ -105,3 +105,11 @@ def write2excel(data, user):
     for i in range(len(data)):
         for j in range(len(data[i])):
             active_sheet.range((i + 1, j + 1)).value = data[i][j]
+
+
+def dumptxt(file):
+    temp = open(file,encoding='utf-8').readlines()
+    data = list(set(temp))
+    with open(file,mode='w',encoding='utf-8') as f:
+        for aweme in data:
+            f.write(aweme)
