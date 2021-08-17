@@ -57,7 +57,10 @@ def main():
     for line in open('followers.txt', encoding='utf-8'):
         add_new = 0
         user, sec_uid = line.rstrip().split(':')
-        f = open(f'followers/{user}.txt', encoding='utf-8')
+        try:
+            f = open(f'followers/{user}.txt', encoding='utf-8')
+        except:
+            continue
         aweme_ids = [video[0:19] for video in f.readlines()]
         videos = [
             video.rstrip() for video in open(
