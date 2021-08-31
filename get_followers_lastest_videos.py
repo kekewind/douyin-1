@@ -1,5 +1,4 @@
 # 获取各个正在关注人最新发布的几个视频
-import time
 import requests
 import re
 import json
@@ -17,7 +16,10 @@ def get_desc_vid(aweme_id):
         timeout=5).text
     response_json = json.loads(response)
     # 将windows中文件名不支持的字符删除
-    desc = re.sub('[\\/:*?"<>|\n]', '', response_json['item_list'][0]['desc'])
+    desc = re.sub(
+        '[\\\\/:*?"<>|\n]',
+        '',
+        response_json['item_list'][0]['desc'])
     vid = response_json['item_list'][0]['video']['vid']
     return desc, vid
 
@@ -59,7 +61,7 @@ def main():
         user, sec_uid = line.rstrip().split(':')
         try:
             f = open(f'followers/{user}.txt', encoding='utf-8')
-        except:
+        except BaseException:
             continue
         aweme_ids = [video[0:19] for video in f.readlines()]
         videos = [

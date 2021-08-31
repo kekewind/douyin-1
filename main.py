@@ -1,5 +1,7 @@
 # mitmdump抓包脚本
 import json
+import re
+
 import pymysql
 from pymongo import MongoClient
 host = 'localhost'
@@ -18,23 +20,24 @@ database = client["douyin"]
 collection = database["favorites"]
 cursor = db.cursor()
 
+
 def response(flow):
     # 将我的喜欢存入数据库和txt文件
     if 'https://www.douyin.com/aweme/v1/web/aweme/favorite/' in flow.request.url:
-        with open('favorite2.txt', 'a', encoding='utf-8') as f:
+        with open('favorite.txt', 'a', encoding='utf-8') as f:
             for aweme in json.loads(flow.response.text)['aweme_list']:
                 if 'download_addr' in aweme['video']:
+                    desc = re.sub('[\\\\/:*?"<>|\n]', '', aweme['desc'])
                     f.write(
                         aweme['aweme_id'] +
                         "==" +
                         aweme['video']['download_addr']['uri'] +
                         "==" +
-                        aweme['desc'])
+                        desc)
                     f.write('\n')
                 collection.insert_one(dict(aweme))
                 aweme_id = aweme['aweme_id']
                 aweme_type = aweme['aweme_type']
-                desc = aweme['desc']
                 download_addr = aweme['video']['play_addr']['uri']
                 create_time = aweme['create_time']
                 author_nickname = aweme['author']['nickname']

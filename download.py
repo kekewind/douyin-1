@@ -2,6 +2,7 @@ import os
 import xlwings as xw
 import re
 import requests
+
 headers = {
     'authority': 'api.amemv.com',
     'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
@@ -20,7 +21,7 @@ def save_video(user, aweme_id, desc, video_content):
     if desc is None or desc == "":
         filename = aweme_id + "_"
     else:
-        desc = re.sub('[\\/:*?"<>|]', '', desc)
+        desc = re.sub('[\\\\/:*?"<>|\n]', '', desc)
         filename = aweme_id + "_" + desc
     savepath = path + "/" + filename + ".mp4"
     with open(savepath, mode='wb') as f:
