@@ -2,7 +2,8 @@
 import requests
 import re
 import json
-
+from utils import log2file
+logger = log2file()
 headers = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36',
     'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
@@ -37,7 +38,6 @@ def download_new_videos(user, number):
     videos = open(f'followers/{user}.txt',
                   encoding='utf-8').readlines()[:number]
     for video in videos:
-        print(video[0:19], end='\t')
         aweme_id, vid, desc = video.rstrip().split("==")
         download_url = 'https://aweme.snssdk.com/aweme/v1/play/?video_id={' \
                        '}&line=0&ratio=720p&media_type=4&vr_type=0&improve_bitrate=0&is_play_url=1&is_support_h265=0&source' \
@@ -52,13 +52,14 @@ def download_new_videos(user, number):
             timeout=10).content
         with open(savepath, 'wb') as f:
             f.write(response)
-            print("下载完成")
+            logger.log(video[0:19] + "\t下载完成")
 
 
 def main():
     for line in open('followers.txt', encoding='utf-8'):
         add_new = 0
         user, sec_uid = line.rstrip().split(':')
+        logger.info(user+" start")
         try:
             f = open(f'followers/{user}.txt', encoding='utf-8')
         except BaseException:
@@ -82,17 +83,12 @@ def main():
                 add_new += 1
         f.close()
         update_user_videos(user, videos)
+        logger.info(len(new_aweme_ids))
         if add_new > 0:
-            print(len(new_aweme_ids))
-            print(f'{user}新增了{add_new}个视频')
+            logger.info(f'{user}新增了{add_new}个视频')
             download_new_videos(user, add_new)
+    logger.info("*" * 80 + '\n')
 
 
 if __name__ == '__main__':
     main()
-# count = 1
-# while True:
-#     main()
-#     print(f"第{count}次")
-#     count += 1
-#     time.sleep(3600)

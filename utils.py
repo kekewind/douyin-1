@@ -108,8 +108,26 @@ def write2excel(data, user):
 
 
 def dumptxt(file):
-    temp = open(file,encoding='utf-8').readlines()
+    temp = open(file, encoding='utf-8').readlines()
     data = list(set(temp))
-    with open(file,mode='w',encoding='utf-8') as f:
+    with open(file, mode='w', encoding='utf-8') as f:
         for aweme in data:
             f.write(aweme)
+
+
+def log2file():
+    import logging
+    logger = logging.getLogger('get_latest')
+    logger.setLevel(logging.INFO)
+    filepath = 'download.log'
+    hadler = logging.FileHandler(filepath, mode='a', encoding='utf-8')
+    hadler.setLevel(logging.NOTSET)
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+    format = logging.Formatter("%(asctime)s - %(message)s")
+    hadler.setFormatter(format)
+    ch.setFormatter(format)
+    logger.addHandler(ch)
+    logger.addHandler(hadler)
+    logger.info("*" * 80)
+    return logger
