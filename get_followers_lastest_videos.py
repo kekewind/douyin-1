@@ -52,7 +52,7 @@ def download_new_videos(user, number):
             timeout=10).content
         with open(savepath, 'wb') as f:
             f.write(response)
-            logger.log(video[0:19] + "\t下载完成")
+            logger.info(video[0:19] + "\t下载完成")
 
 
 def main():
