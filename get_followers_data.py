@@ -67,7 +67,10 @@ if __name__ == "__main__":
                 write2mongodb(user_video_datas, mongodb_data)
     cursor.close()
     db.close()
-    del wb.sheets['Sheet1']
-    wb.save('videos.xlsx')
+    try:
+        del wb.sheets['Sheet1']
+    except:
+        pass
+    wb.save('douyin.xlsx')
     wb.close()
     app.quit()

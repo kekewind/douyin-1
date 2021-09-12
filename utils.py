@@ -7,7 +7,10 @@ client = MongoClient("mongodb://localhost:27017/")
 database = client["douyin"]
 collection = database["followers_videos"]
 app = xw.App(visible=False, add_book=False)
-wb = app.books.add()
+try:
+    wb = app.books.open('douyin.xlsx')
+except FileNotFoundError:
+    wb = app.books.add()
 host = 'localhost'
 port = 3306
 database = 'douyin'
@@ -90,7 +93,7 @@ def datas_process(userdata):
 
 
 def write2txt(datas, user):
-    with open(f'followers/{user}.txt', mode='w', encoding='utf-8') as f:
+    with open(f'followers/{user}.txt', mode='a', encoding='utf-8') as f:
         for video in datas:
             f.write(video[0] + "==" + video[1] + "==" + video[2])
             f.write('\n')
@@ -98,9 +101,10 @@ def write2txt(datas, user):
 
 def write2excel(data, user):
     try:
-        active_sheet = wb.sheets.add(user)
-    except BaseException:
         active_sheet = wb.sheets[user]
+    except BaseException:
+        active_sheet = wb.sheets.add(user)
+    active_sheet.clear()
     active_sheet.range("A:A").api.NumberFormat = "@"
     for i in range(len(data)):
         for j in range(len(data[i])):
