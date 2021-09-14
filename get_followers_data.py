@@ -1,5 +1,5 @@
 # 获取正在关注的人的所有上传视频
-import requests
+# https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=7006608594028334347
 from utils import *
 
 
@@ -64,13 +64,6 @@ if __name__ == "__main__":
                 write2excel(small_data, user)
                 write2txt(small_data, user)
                 write2mysql(small_data, user, db, cursor, mysql_data)
-                write2mongodb(user_video_datas, mongodb_data)
+            write2mongodb(user_video_datas, mongodb_data)
     cursor.close()
     db.close()
-    try:
-        del wb.sheets['Sheet1']
-    except:
-        pass
-    wb.save('douyin.xlsx')
-    wb.close()
-    app.quit()

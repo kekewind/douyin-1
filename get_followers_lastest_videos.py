@@ -3,6 +3,7 @@ import requests
 import re
 import json
 from utils import log2file
+from utils import get_downloadurl
 logger = log2file()
 headers = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36',
@@ -11,7 +12,7 @@ headers = {
     'referer': 'https://www.douyin.com/', }
 
 
-def get_desc_vid(aweme_id):
+def get_desc_src(aweme_id):
     response = requests.get(
         url='https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids={}&dytk='.format(aweme_id), headers=headers,
         timeout=5).text
@@ -21,8 +22,8 @@ def get_desc_vid(aweme_id):
         '[\\\\/:*?"<>|\n]',
         '',
         response_json['item_list'][0]['desc'])
-    vid = response_json['item_list'][0]['video']['vid']
-    return desc, vid
+    src = get_downloadurl(aweme_id)
+    return desc, src
 
 
 # 更新文件写入新的视频
@@ -38,14 +39,11 @@ def download_new_videos(user, number):
     videos = open(f'followers/{user}.txt',
                   encoding='utf-8').readlines()[:number]
     for video in videos:
-        aweme_id, vid, desc = video.rstrip().split("==")
-        download_url = 'https://aweme.snssdk.com/aweme/v1/play/?video_id={' \
-                       '}&line=0&ratio=720p&media_type=4&vr_type=0&improve_bitrate=0&is_play_url=1&is_support_h265=0&source' \
-                       '=PackSourceEnum_PUBLISH'.format(vid)
+        aweme_id, desc, src = video.rstrip().split("==")
         filename = aweme_id + "_" + desc
         savepath = path + "/" + filename + ".mp4"
         response = requests.get(
-            url=download_url,
+            url=src,
             headers={
                 'User-Agent': 'Mozilla/5.0 (Android 5.1.1; Mobile; rv:68.0) Gecko/68.0 Firefox/68.0',
             },
@@ -59,7 +57,7 @@ def main():
     for line in open('followers.txt', encoding='utf-8'):
         add_new = 0
         user, sec_uid = line.rstrip().split(':')
-        logger.info(user+" start")
+        logger.info(user + " start")
         try:
             f = open(f'followers/{user}.txt', encoding='utf-8')
         except BaseException:
@@ -77,8 +75,8 @@ def main():
             response.text)
         for new_aweme_id in new_aweme_ids:
             if new_aweme_id not in aweme_ids:
-                desc, vid = get_desc_vid(new_aweme_id)
-                video = new_aweme_id + "==" + vid + "==" + desc
+                desc, src = get_desc_src(new_aweme_id)
+                video = new_aweme_id + " == " + desc + " == " + src
                 videos.insert(0, video)
                 add_new += 1
         f.close()

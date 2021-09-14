@@ -26,19 +26,21 @@ def response(flow):
     if 'https://www.douyin.com/aweme/v1/web/aweme/favorite/' in flow.request.url:
         with open('favorite.txt', 'a', encoding='utf-8') as f:
             for aweme in json.loads(flow.response.text)['aweme_list']:
-                if 'download_addr' in aweme['video']:
+                if 'play_addr' in aweme['video']:
                     desc = re.sub('[\\\\/:*?"<>|\n]', '', aweme['desc'])
                     f.write(
                         aweme['aweme_id'] +
                         "==" +
-                        aweme['video']['download_addr']['uri'] +
+                        desc +
                         "==" +
-                        desc)
+                        aweme['video']['play_addr']['url_list'][0])
                     f.write('\n')
+                # 写入mongodb
                 collection.insert_one(dict(aweme))
+                # 写入mysql
                 aweme_id = aweme['aweme_id']
                 aweme_type = aweme['aweme_type']
-                download_addr = aweme['video']['play_addr']['uri']
+                download_addr = aweme['video']['play_addr']['url_list'][0]
                 create_time = aweme['create_time']
                 author_nickname = aweme['author']['nickname']
                 author_sec_uid = aweme['author']['sec_uid']

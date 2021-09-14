@@ -1,16 +1,13 @@
 import pymysql
 import re
+import requests
 import xlwings as xw
 from pymongo import MongoClient
 
 client = MongoClient("mongodb://localhost:27017/")
 database = client["douyin"]
 collection = database["followers_videos"]
-app = xw.App(visible=False, add_book=False)
-try:
-    wb = app.books.open('douyin.xlsx')
-except FileNotFoundError:
-    wb = app.books.add()
+
 host = 'localhost'
 port = 3306
 database = 'douyin'
@@ -23,6 +20,16 @@ db = pymysql.connect(
     user=user,
     password=password)
 cursor = db.cursor()
+
+
+def get_downloadurl(aweme_id):
+    data = {
+        'url': 'https://www.douyin.com/video/{}'.format(aweme_id)
+    }
+    response = requests.post(
+        'https://www.daimadog.com/wp-content/themes/mytheme/action/dyjx.php',
+        data=data)
+    return response.json()['playurl']
 
 
 def get_database_videos():
@@ -72,10 +79,12 @@ def write2mysql(datas, username, db, cursor, mysql_data):
         else:
             inser_sql = "insert into followers_datas values('{user}',{data})".format(
                 user=username, data=str(data)[1:-1])
+            print(inser_sql)
             try:
                 cursor.execute(inser_sql)
                 db.commit()
             except Exception as e:
+                print(e)
                 db.rollback()
 
 
@@ -84,11 +93,9 @@ def datas_process(userdata):
     for item in userdata:
         if item['aweme_type'] == 4:
             aweme_id = item['aweme_id']
-            vid = item['video']['vid']
-            temp_src = item['video']['download_addr']['url_list'][0]
-            src = re.sub('&watermark=1', '&watermark=0', temp_src, re.S)
             desc = re.sub('[\\/:*?"<>|\n]', '', item['desc'])
-            small_data.append([aweme_id, vid, desc, src])
+            src = item['video']['play_addr']['url_list'][0]
+            small_data.append([aweme_id, desc, src])
     return small_data
 
 
@@ -100,6 +107,8 @@ def write2txt(datas, user):
 
 
 def write2excel(data, user):
+    app = xw.App(visible=False, add_book=False)
+    wb = app.books.open('douyin.xlsx')
     try:
         active_sheet = wb.sheets[user]
     except BaseException:
@@ -109,6 +118,13 @@ def write2excel(data, user):
     for i in range(len(data)):
         for j in range(len(data[i])):
             active_sheet.range((i + 1, j + 1)).value = data[i][j]
+    try:
+        del wb.sheets['Sheet1']
+    except BaseException:
+        pass
+    wb.save()
+    wb.close()
+    app.quit()
 
 
 def dumptxt(file):

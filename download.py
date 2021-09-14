@@ -1,6 +1,5 @@
 import os
 import xlwings as xw
-import re
 import requests
 
 headers = {
@@ -21,14 +20,13 @@ def save_video(user, aweme_id, desc, video_content):
     if desc is None or desc == "":
         filename = aweme_id + "_"
     else:
-        desc = re.sub('[\\\\/:*?"<>|\n]', '', desc)
         filename = aweme_id + "_" + desc
     savepath = path + "/" + filename + ".mp4"
     with open(savepath, mode='wb') as f:
         f.write(video_content)
 
 
-def download(src, aweme_id, desc, author):
+def download_video(src, aweme_id, desc, author):
     try:
         resp = requests.get(
             url=src,
@@ -47,20 +45,20 @@ def download_from_excel():
     for root, dirs, file in os.walk(r'F:\douyin', topdown=False):
         for name in file:
             done.append(name[0:19])
-    wb = xw.Book('videos.xlsx')
+    wb = xw.Book('douyin.xlsx')
     sheets = wb.sheets
     for sheet in sheets:
         author = sheet.name
         print(author)
         i = 1
         while True:
-            src = sheet.range((i, 4)).value
+            src = sheet.range((i, 3)).value
             aweme_id = sheet.range((i, 1)).value
-            desc = sheet.range((i, 3)).value
+            desc = sheet.range((i, 2)).value
             if aweme_id not in done:
-                download(src, aweme_id, desc, author)
+                download_video(src, aweme_id, desc, author)
             i += 1
-            if sheet.range((i, 4)).value is None:
+            if sheet.range((i, 3)).value is None:
                 break
     wb.close()
 
@@ -78,14 +76,11 @@ def download_from_txt():
                 f'followers/{follower}.txt',
                 encoding='utf-8').readlines()]
         for video in videos:
-            aweme_id, vid, desc = video.split("==")
+            aweme_id, desc, src = video.split("==")
             if aweme_id not in done:
                 print(follower, video, end='\t')
-                download_url = 'https://aweme.snssdk.com/aweme/v1/play/?video_id={' \
-                               '}&line=0&ratio=720p&media_type=4&vr_type=0&improve_bitrate=0&is_play_url=1&is_support_h265=0&source' \
-                               '=PackSourceEnum_PUBLISH'.format(vid)
                 response = requests.get(
-                    url=download_url,
+                    url=src,
                     headers={
                         'User-Agent': 'Mozilla/5.0 (Android 5.1.1; Mobile; rv:68.0) Gecko/68.0 Firefox/68.0',
                     },
@@ -98,14 +93,11 @@ def download_from_txt():
 def download_favorite():
     favorites = [item[0:19] for item in os.listdir(r"F:\douyin\favorite")]
     for video in open('favorite.txt', encoding='utf-8'):
-        aweme_id, vid, desc = video.rstrip().split("==")
+        aweme_id, desc, src = video.rstrip().split("==")
         if aweme_id not in favorites:
             print(video.rstrip(), end='\t')
-            download_url = 'https://aweme.snssdk.com/aweme/v1/play/?video_id={' \
-                           '}&line=0&ratio=720p&media_type=4&vr_type=0&improve_bitrate=0&is_play_url=1&is_support_h265=0&source' \
-                           '=PackSourceEnum_PUBLISH'.format(vid)
             response = requests.get(
-                url=download_url,
+                url=src,
                 headers={
                     'User-Agent': 'Mozilla/5.0 (Android 5.1.1; Mobile; rv:68.0) Gecko/68.0 Firefox/68.0',
                 },
@@ -115,7 +107,63 @@ def download_favorite():
             favorites.append(aweme_id)
 
 
+def download_photo(src, i, aweme_id, desc, author_dir):
+    filename = aweme_id + "_" + desc + "_" + str(i + 1) + ".jpg"
+    filepath = os.path.join(author_dir, filename)
+    # 下载过了
+    if os.path.exists(filepath):
+        return
+    response = requests.get(url=src, headers=headers)
+    with open(filepath, mode='wb') as f:
+        try:
+            f.write(response.content)
+            print(filepath + "\t下载完成")
+        except Exception as e:
+            print(aweme_id + "\t下载图片出错")
+            print(e)
+
+
+def download_imgs():
+    rootdir = r"F:\douyin\images"
+    from pymongo import MongoClient
+    import json
+    client = MongoClient("mongodb://localhost:27017/")
+    database = client["douyin"]
+    collection = database["followers_videos"]
+    images_aweme = collection.find({'aweme_type': 2})
+    for aweme in images_aweme:
+        aweme_id = aweme['aweme_id']
+        author = aweme['author']['nickname']
+        author_dir = rootdir + os.sep + author
+        if not os.path.exists(author_dir):
+            os.makedirs(author_dir)
+        desc = aweme['desc']
+        rs = requests.get(
+            url='https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids={}&dytk='.format(
+                aweme_id),
+            headers=headers,
+            timeout=5).text
+        response_json = json.loads(rs)
+        aweme_images = response_json['item_list'][0]['images']
+        if aweme_images is None:
+            download_photo(
+                src=response_json['item_list'][0]['image_infos'][0]['label_large']['url_list'][0],
+                i=0,
+                aweme_id=aweme_id,
+                desc=desc,
+                author_dir=author_dir)
+            continue
+        for i in range(len(aweme_images)):
+            download_photo(
+                src=aweme_images[i]['url_list'][0],
+                i=i,
+                aweme_id=aweme_id,
+                desc=desc,
+                author_dir=author_dir)
+
+
 if __name__ == '__main__':
     # download_favorite()
-    download_from_txt()
+    # download_from_txt()
     # download_from_excel()
+    download_imgs()
