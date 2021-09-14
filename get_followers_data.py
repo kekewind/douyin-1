@@ -22,7 +22,8 @@ def get_one_page_info(sec_uid, max_cursor):
     try:
         iscontinue = data_json['has_more']
     except BaseException:
-        print('keyerror')
+        print("服务器错误，请求再来一遍")
+        return page_video_data, max_cursor
     else:
         if iscontinue:
             return page_video_data, data_json['max_cursor']
@@ -51,19 +52,24 @@ if __name__ == "__main__":
             user_secid.append(item.rstrip())
     for item in user_secid:
         user, sec_id = item.split(':')
+        user_video_datas = []
         print(user, sec_id)
         try:
             user_video_datas = get_videos(sec_id)
             # 写入MySQL,excel,TXT中的数据与mongod的不一样
-            small_data = datas_process(user_video_datas)
+            videos_data = datas_process(user_video_datas)
         except Exception as e:
             print(e)
             print(user + "has error")
         else:
-            if len(small_data) > 0:
-                write2excel(small_data, user)
-                write2txt(small_data, user)
-                write2mysql(small_data, user, db, cursor, mysql_data)
-            write2mongodb(user_video_datas, mongodb_data)
+            if len(videos_data) > 0:
+                write2excel(videos_data, user)
+                write2txt(videos_data, user)
+                write2mysql(videos_data, user, db, cursor, mysql_data)
+        finally:
+            if len(user_video_datas) > 0:
+                write2mongodb(user_video_datas, mongodb_data)
+            else:
+                print(user + "\t咋一个作品都没有啊")
     cursor.close()
     db.close()

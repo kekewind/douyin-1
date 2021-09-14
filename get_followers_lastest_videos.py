@@ -5,6 +5,8 @@ import json
 from utils import log2file
 from utils import get_downloadurl
 logger = log2file()
+from utils import write2mysql
+from utils import write2mongodb
 headers = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36',
     'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
@@ -17,6 +19,7 @@ def get_desc_src(aweme_id):
         url='https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids={}&dytk='.format(aweme_id), headers=headers,
         timeout=5).text
     response_json = json.loads(response)
+    write2mongodb(response['item_list'][0],[])
     # 将windows中文件名不支持的字符删除
     desc = re.sub(
         '[\\\\/:*?"<>|\n]',

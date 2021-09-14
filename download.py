@@ -164,6 +164,6 @@ def download_imgs():
 
 if __name__ == '__main__':
     # download_favorite()
-    # download_from_txt()
+    download_from_txt()
     # download_from_excel()
     download_imgs()

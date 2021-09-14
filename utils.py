@@ -6,7 +6,7 @@ from pymongo import MongoClient
 
 client = MongoClient("mongodb://localhost:27017/")
 database = client["douyin"]
-collection = database["followers_videos"]
+followers_videos_collection = database["followers_videos"]
 
 host = 'localhost'
 port = 3306
@@ -37,7 +37,7 @@ def get_database_videos():
     cursor.execute('select aweme_id from followers_datas')
     for data in cursor.fetchall():
         mysql_data.append(data[0])
-    datas = collection.find({'aweme_id': {'$ne': 1}})
+    datas = followers_videos_collection.find({'aweme_id': {'$ne': 1}})
     mongodb_data = []
     for data in datas:
         mongodb_data.append(data['aweme_id'])
@@ -48,12 +48,12 @@ def write2mongodb(user_videos_datas, mongodb_data):
     for video in user_videos_datas:
         aweme_id = video['aweme_id']
         if aweme_id in mongodb_data:
-            pass
+            continue
         else:
             try:
                 # 如果不考虑判断视频在不在的话,可以使用更新操作
                 # collection.update_one({'aweme_id': aweme_id}, {'$set': video})
-                collection.insert(video)
+                followers_videos_collection.insert(video)
             except BaseException:
                 print("插入mongodb数据库失败")
 
@@ -74,8 +74,8 @@ def mysql_connect():
 
 def write2mysql(datas, username, db, cursor, mysql_data):
     for data in datas:
-        if datas[0] in mysql_data:
-            pass
+        if data[0] in mysql_data:
+            continue
         else:
             inser_sql = "insert into followers_datas values('{user}',{data})".format(
                 user=username, data=str(data)[1:-1])
@@ -89,14 +89,20 @@ def write2mysql(datas, username, db, cursor, mysql_data):
 
 
 def datas_process(userdata):
-    small_data = []
+    videos_data = []
     for item in userdata:
         if item['aweme_type'] == 4:
             aweme_id = item['aweme_id']
             desc = re.sub('[\\/:*?"<>|\n]', '', item['desc'])
             src = item['video']['play_addr']['url_list'][0]
-            small_data.append([aweme_id, desc, src])
-    return small_data
+            videos_data.append([aweme_id, desc, src])
+    return videos_data
+
+
+def truncateDataBase():
+    # 清空mysql和mongodb数据库中follower_datas表中的数据
+    cursor.execute("truncate table followers_datas")
+    followers_videos_collection.remove({})
 
 
 def write2txt(datas, user):
