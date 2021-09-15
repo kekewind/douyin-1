@@ -1,7 +1,7 @@
 # 获取正在关注的人的所有上传视频
 # https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=7006608594028334347
 from utils import *
-logger = log2file('get_followers_data.log','w')
+logger = log2file('get_followers_data.log', 'w')
 
 
 def get_one_page_videos_data(sec_uid, signature, max_cursor):
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     for item in user_secid:
         user, sec_id = item.split(':')
         user_video_datas = []
-        logger.info(user+" "+sec_id)
+        logger.info(user + " " + sec_id)
         try:
             user_video_datas = get_videos(sec_id)
             # 写入MySQL,excel,TXT中的数据与mongod的不一样
@@ -69,11 +69,15 @@ if __name__ == "__main__":
                 write2excel(videos_data, user)
                 write2txt(videos_data, user)
                 write2mysql(videos_data, user, db, cursor, mysql_data)
+            else:
+                # 没有视频，只创建txt文件
+                logger.info(user + "\t作品中没有一个视频，只创建空文件")
+                write2txt(videos_data, user)
         finally:
             if len(user_video_datas) > 0:
                 write2mongodb(user_video_datas, mongodb_data)
             else:
                 logger.info(user + "\t咋一个作品都没有啊")
-    logger.info(str(error_user))
+    logger.info("出错的foller：" + str(error_user))
     cursor.close()
     db.close()

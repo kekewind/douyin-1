@@ -105,9 +105,11 @@ def truncateDataBase():
     followers_videos_collection.remove({})
 
 
-def write2txt(datas, user):
+def write2txt(videos_data, user):
     with open(f'followers/{user}.txt', mode='a', encoding='utf-8') as f:
-        for video in datas:
+        if len(videos_data) == 0:
+            return
+        for video in videos_data:
             f.write(video[0] + "==" + video[1] + "==" + video[2])
             f.write('\n')
 
