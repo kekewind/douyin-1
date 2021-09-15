@@ -1,15 +1,15 @@
 # 获取各个正在关注人最新发布的几个视频
+from utils import write2mongodb
+from utils import write2mysql
 import requests
 import re
 import json
 from utils import log2file
 from utils import get_database_videos
 from utils import datas_process
-from utils import db,cursor
+from utils import db, cursor
 from utils import get_downloadurl
-logger = log2file('download.log','a',time=True)
-from utils import write2mysql
-from utils import write2mongodb
+logger = log2file('download.log', 'a', time=True)
 headers = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36',
     'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
@@ -17,14 +17,20 @@ headers = {
     'referer': 'https://www.douyin.com/', }
 
 
-def get_desc_src(aweme_id,mysql_data,mongodb_data,user):
+def get_desc_src(aweme_id, mysql_data, mongodb_data, user):
     response = requests.get(
         url='https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids={}&dytk='.format(aweme_id), headers=headers,
         timeout=5).text
     response_json = json.loads(response)
     # 将新的作品写入到mysql和mongodb
-    write2mongodb(response_json['item_list'],mongodb_data)
-    write2mysql(datas_process(response_json['item_list']),user,db,cursor,mysql_data)
+    write2mongodb(response_json['item_list'], mongodb_data)
+    write2mysql(
+        datas_process(
+            response_json['item_list'])[0],
+        user,
+        db,
+        cursor,
+        mysql_data)
     # 将windows中文件名不支持的字符删除
     desc = re.sub(
         '[\\\\/:*?"<>|\n]',
@@ -84,7 +90,8 @@ def main():
             response.text)
         for new_aweme_id in new_aweme_ids:
             if new_aweme_id not in aweme_ids:
-                desc, src = get_desc_src(new_aweme_id,mysql_data,mongodb_data,user)
+                desc, src = get_desc_src(
+                    new_aweme_id, mysql_data, mongodb_data, user)
                 video = new_aweme_id + " == " + desc + " == " + src
                 videos.insert(0, video)
                 add_new += 1
