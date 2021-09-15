@@ -141,16 +141,19 @@ def dumptxt(file):
             f.write(aweme)
 
 
-def log2file():
+def log2file(filename,mode,time=False):
     import logging
     logger = logging.getLogger('get_latest')
     logger.setLevel(logging.INFO)
-    filepath = 'download.log'
-    hadler = logging.FileHandler(filepath, mode='a', encoding='utf-8')
+    filepath = filename
+    hadler = logging.FileHandler(filepath, mode=mode, encoding='utf-8')
     hadler.setLevel(logging.NOTSET)
     ch = logging.StreamHandler()
     ch.setLevel(logging.INFO)
-    format = logging.Formatter("%(asctime)s - %(message)s")
+    if time:
+        format = logging.Formatter("%(asctime)s - %(message)s")
+    else:
+        format = logging.Formatter("%(message)s")
     hadler.setFormatter(format)
     ch.setFormatter(format)
     logger.addHandler(ch)

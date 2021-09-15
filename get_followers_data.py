@@ -1,6 +1,7 @@
 # 获取正在关注的人的所有上传视频
 # https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=7006608594028334347
 from utils import *
+logger = log2file('get_followers_data.log','w')
 
 
 def get_one_page_videos_data(sec_uid, signature, max_cursor):
@@ -22,7 +23,7 @@ def get_one_page_info(sec_uid, max_cursor):
     try:
         iscontinue = data_json['has_more']
     except BaseException:
-        print("服务器错误，请求再来一遍")
+        logger.info("服务器错误，请求再来一遍")
         return page_video_data, max_cursor
     else:
         if iscontinue:
@@ -37,7 +38,7 @@ def get_videos(sec_uid):
     while True:
         page_data, max_cursor = get_one_page_info(sec_uid, max_cursor)
         all_data += page_data
-        print(len(all_data))
+        logger.info(str(len(all_data)))
         if not max_cursor:
             break
     return all_data
@@ -50,17 +51,19 @@ if __name__ == "__main__":
     with open('followers.txt', encoding='utf-8') as f:
         for item in f.readlines():
             user_secid.append(item.rstrip())
+    error_user = []
     for item in user_secid:
         user, sec_id = item.split(':')
         user_video_datas = []
-        print(user, sec_id)
+        logger.info(user+" "+sec_id)
         try:
             user_video_datas = get_videos(sec_id)
             # 写入MySQL,excel,TXT中的数据与mongod的不一样
             videos_data = datas_process(user_video_datas)
         except Exception as e:
-            print(e)
-            print(user + "has error")
+            logger.info(e)
+            error_user.append(user)
+            logger.info(user + "has error")
         else:
             if len(videos_data) > 0:
                 write2excel(videos_data, user)
@@ -70,6 +73,7 @@ if __name__ == "__main__":
             if len(user_video_datas) > 0:
                 write2mongodb(user_video_datas, mongodb_data)
             else:
-                print(user + "\t咋一个作品都没有啊")
+                logger.info(user + "\t咋一个作品都没有啊")
+    logger.info(str(error_user))
     cursor.close()
     db.close()

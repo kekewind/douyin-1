@@ -7,7 +7,7 @@ from utils import get_database_videos
 from utils import datas_process
 from utils import db,cursor
 from utils import get_downloadurl
-logger = log2file()
+logger = log2file('download.log','a',time=True)
 from utils import write2mysql
 from utils import write2mongodb
 headers = {
