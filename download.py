@@ -124,6 +124,10 @@ def download_photo(src, i, aweme_id, desc, author_dir):
 
 
 def download_imgs():
+    secid2user = {}
+    for line in open('followers.txt',encoding='utf-8'):
+        user,sec_uid = line.rstrip().split(':')
+        secid2user[sec_uid] = user
     rootdir = r"F:\douyin\images"
     from pymongo import MongoClient
     import json
@@ -133,7 +137,7 @@ def download_imgs():
     images_aweme = collection.find({'aweme_type': 2})
     for aweme in images_aweme:
         aweme_id = aweme['aweme_id']
-        author = aweme['author']['nickname']
+        author = secid2user[aweme['author']['sec_uid']]
         author_dir = rootdir + os.sep + author
         if not os.path.exists(author_dir):
             os.makedirs(author_dir)
