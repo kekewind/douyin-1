@@ -16,7 +16,7 @@ def get_one_page_videos_data(sec_uid, signature, max_cursor):
 
 def get_one_page_info(sec_uid, max_cursor):
     page_video_data = []
-    signature = requests.get('http://localhost:3000/sign').text
+    signature = requests.get('http://8.9.15.155:3000/sign').text
     data_json = get_one_page_videos_data(sec_uid, signature, max_cursor)
     if data_json and 'aweme_list' in data_json.keys():
         page_video_data = data_json['aweme_list']
@@ -45,6 +45,10 @@ def get_videos(sec_uid):
 
 
 if __name__ == "__main__":
+    all_aweme = 0
+    all_video_aweme = 0
+    all_photo_aweme = 0
+    users = []
     user_secid = []
     # 获得数据库中已经写过的信息
     mysql_data, mongodb_data = get_database_videos()
@@ -54,18 +58,23 @@ if __name__ == "__main__":
     error_user = []
     for item in user_secid:
         user, sec_id = item.split(':')
+        users.append(user)
         user_video_datas = []
         logger.info(user + " " + sec_id)
         try:
             user_video_datas = get_videos(sec_id)
             # 写入MySQL,excel,TXT中的数据与mongod的不一样
-            videos_data = datas_process(user_video_datas)
+            videos_data, photo_aweme_num = datas_process(user_video_datas)
+            all_photo_aweme += photo_aweme_num
         except Exception as e:
             logger.info(e)
             error_user.append(user)
+            users.remove(user)
             logger.info(user + "has error")
         else:
-            if len(videos_data) > 0:
+            user_awemes_videos = len(videos_data)
+            all_video_aweme += user_awemes_videos
+            if user_awemes_videos > 0:
                 write2excel(videos_data, user)
                 write2txt(videos_data, user)
                 write2mysql(videos_data, user, db, cursor, mysql_data)
@@ -74,10 +83,33 @@ if __name__ == "__main__":
                 logger.info(user + "\t作品中没有一个视频，只创建空文件")
                 write2txt(videos_data, user)
         finally:
-            if len(user_video_datas) > 0:
+            user_awemes_nums = len(user_video_datas)
+            all_aweme += user_awemes_nums
+            if user_awemes_nums > 0:
                 write2mongodb(user_video_datas, mongodb_data)
             else:
                 logger.info(user + "\t咋一个作品都没有啊")
-    logger.info("出错的foller：" + str(error_user))
     cursor.close()
     db.close()
+    # 获取信息后直接下载
+    # download_from_txt()
+    # download_imgs()
+    # 输出统计信息
+    usersnum = len(users)
+    distinct_user = list(set(users))
+    distinct_usersnum = len(distinct_user)
+    logger.info(f"本次运行一共获取{usersnum}个follower关注的数据")
+    if len(error_user) > 0:
+        logger.info("其中出错的foller：" + str(error_user)[1:-1])
+    logger.info(f"剔除重名和出错的，一共有{distinct_usersnum}个follower，他们是:")
+    for i in range(0, len(distinct_user), 5):
+        j = i
+        info = ''
+        for j in range(j, j + 5):
+            try:
+                info += distinct_user[j].ljust(12,' ')
+            except Exception as e:
+                pass
+        logger.info(info)
+    logger.info(
+        f"这么多关注中一共有{all_aweme}个作品，其中有{all_video_aweme}个视频，其他的{all_aweme-all_video_aweme}个都是图片类型作品")
