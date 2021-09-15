@@ -1,5 +1,7 @@
 import os
 import re
+import sys
+
 import xlwings as xw
 import requests
 
@@ -25,6 +27,10 @@ def save_video(user, aweme_id, desc, video_content):
     savepath = path + "/" + filename + ".mp4"
     with open(savepath, mode='wb') as f:
         f.write(video_content)
+    if os.path.getsize(savepath) < 2:
+        print(aweme_id + "\t下载出错，文件大小不正常，建议检查下程序")
+        os.remove(savepath)
+        sys.exit(0)
 
 
 def download_video(src, aweme_id, desc, author):
@@ -128,6 +134,10 @@ def download_photo(src, i, aweme_id, desc, author_dir):
         except Exception as e:
             print(aweme_id + "\t下载图片出错")
             print(e)
+    if os.path.getsize(filepath) < 2:
+        print(aweme_id + "\t下载出错，文件大小不正常，建议检查下程序")
+        os.remove(filepath)
+        sys.exit(0)
 
 
 def download_imgs():

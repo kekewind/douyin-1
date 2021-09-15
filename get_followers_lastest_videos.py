@@ -1,4 +1,7 @@
 # 获取各个正在关注人最新发布的几个视频
+import os
+import sys
+
 from utils import write2mongodb
 from utils import write2mysql
 import requests
@@ -65,6 +68,11 @@ def download_new_videos(user, number):
         with open(savepath, 'wb') as f:
             f.write(response)
             logger.info(video[0:19] + "\t下载完成")
+        if os.path.getsize(savepath) < 2:
+            logger.info(video[0:19] + "\t下载出错，文件大小不正常，建议检查下程序")
+            os.remove(savepath)
+            sys.exit(0)
+
 
 
 def main():
