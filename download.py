@@ -1,4 +1,5 @@
 import os
+import re
 import xlwings as xw
 import requests
 
@@ -76,7 +77,13 @@ def download_from_txt():
                 f'followers/{follower}.txt',
                 encoding='utf-8').readlines()]
         for video in videos:
-            aweme_id, desc, src = video.split("==")
+            try:
+                aweme_id, desc, src = video.split("==")
+            except:
+                video_split = video.split("==")
+                aweme_id = video_split[0]
+                src = video_split[-1]
+                desc = str(video_split[21:-2-len(src)])
             if aweme_id not in done:
                 print(follower, video, end='\t')
                 response = requests.get(
@@ -141,7 +148,7 @@ def download_imgs():
         author_dir = rootdir + os.sep + author
         if not os.path.exists(author_dir):
             os.makedirs(author_dir)
-        desc = aweme['desc']
+        desc = re.sub('[\\/:*?"<>|\n]', '', aweme['desc'])
         rs = requests.get(
             url='https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids={}&dytk='.format(
                 aweme_id),
