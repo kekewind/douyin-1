@@ -79,7 +79,7 @@ def write2mysql(datas, username, db, cursor, mysql_data):
         else:
             inser_sql = "insert into followers_datas values('{user}',{data})".format(
                 user=username, data=str(data)[1:-1])
-            print(inser_sql)
+            # print(inser_sql)
             try:
                 cursor.execute(inser_sql)
                 db.commit()

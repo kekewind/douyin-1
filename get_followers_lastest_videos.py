@@ -3,6 +3,9 @@ import requests
 import re
 import json
 from utils import log2file
+from utils import get_database_videos
+from utils import datas_process
+from utils import db,cursor
 from utils import get_downloadurl
 logger = log2file()
 from utils import write2mysql
@@ -14,12 +17,14 @@ headers = {
     'referer': 'https://www.douyin.com/', }
 
 
-def get_desc_src(aweme_id):
+def get_desc_src(aweme_id,mysql_data,mongodb_data,user):
     response = requests.get(
         url='https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids={}&dytk='.format(aweme_id), headers=headers,
         timeout=5).text
     response_json = json.loads(response)
-    write2mongodb(response['item_list'][0],[])
+    # 将新的作品写入到mysql和mongodb
+    write2mongodb(response_json['item_list'],mongodb_data)
+    write2mysql(datas_process(response_json['item_list']),user,db,cursor,mysql_data)
     # 将windows中文件名不支持的字符删除
     desc = re.sub(
         '[\\\\/:*?"<>|\n]',
@@ -57,6 +62,7 @@ def download_new_videos(user, number):
 
 
 def main():
+    mysql_data, mongodb_data = get_database_videos()
     for line in open('followers.txt', encoding='utf-8'):
         add_new = 0
         user, sec_uid = line.rstrip().split(':')
@@ -78,7 +84,7 @@ def main():
             response.text)
         for new_aweme_id in new_aweme_ids:
             if new_aweme_id not in aweme_ids:
-                desc, src = get_desc_src(new_aweme_id)
+                desc, src = get_desc_src(new_aweme_id,mysql_data,mongodb_data,user)
                 video = new_aweme_id + " == " + desc + " == " + src
                 videos.insert(0, video)
                 add_new += 1
@@ -86,8 +92,8 @@ def main():
         update_user_videos(user, videos)
         logger.info(len(new_aweme_ids))
         if add_new > 0:
-            logger.info(f'{user}新增了{add_new}个视频')
             download_new_videos(user, add_new)
+            logger.info(f'{user}新增了{add_new}个视频')
     logger.info("*" * 80 + '\n')
 
 
