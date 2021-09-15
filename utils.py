@@ -90,13 +90,16 @@ def write2mysql(datas, username, db, cursor, mysql_data):
 
 def datas_process(userdata):
     videos_data = []
+    photo_aweme_num = 0
     for item in userdata:
         if item['aweme_type'] == 4:
             aweme_id = item['aweme_id']
             desc = re.sub('[\\/:*?"<>|\n]', '', item['desc'])
             src = item['video']['play_addr']['url_list'][0]
             videos_data.append([aweme_id, desc, src])
-    return videos_data
+        elif item['aweme_type'] == 2:
+            photo_aweme_num += 1
+    return videos_data,photo_aweme_num
 
 
 def truncateDataBase():
