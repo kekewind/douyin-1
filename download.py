@@ -1,9 +1,9 @@
 import os
 import re
 import sys
-
 import xlwings as xw
 import requests
+from utils import get_downloadurl
 
 headers = {
     'authority': 'api.amemv.com',
@@ -73,11 +73,13 @@ def download_from_excel():
 def download_from_txt():
     followers = [follower[0:-4] for follower in os.listdir('followers/')]
     for follower in followers:
+        done = []
         try:
-            done = [video[0:19]
+            done += [video[0:19]
                     for video in os.listdir(fr'F:\douyin\{follower}')]
         except BaseException:
-            done = []
+            pass
+        print(f"{follower}已经下载的视频有{len(done)}个")
         videos = [
             video.rstrip() for video in open(
                 f'followers/{follower}.txt',
@@ -104,22 +106,22 @@ def download_from_txt():
                         aweme_id +
                         "的下载url地址有问题，获取新的下载url地址",
                         end='\t')
-                    rs = requests.post(
-                        'https://www.daimadog.com/wp-content/themes/mytheme/action/dyjx.php',
-                        data={'url': 'https://www.douyin.com/video/{}'.format(aweme_id)})
-                    if rs.status_code == 200:
-                        response = requests.get(
-                            url=rs.json()['playurl'],
-                            headers={
-                                'User-Agent': 'Mozilla/5.0 (Android 5.1.1; Mobile; rv:68.0) Gecko/68.0 Firefox/68.0',
-                            },
-                        )
-                    else:
-                        print("\n" + aweme_id + "放弃这个玩意")
-                        continue
+                    while True:
+                        rurl = get_downloadurl(aweme_id)
+                        if rurl is not None:
+                            break
+                    print(rurl)
+                    response = requests.get(
+                        url=rurl,
+                        headers={
+                            'User-Agent': 'Mozilla/5.0 (Android 5.1.1; Mobile; rv:68.0) Gecko/68.0 Firefox/68.0',
+                        },
+                    )
                 save_video(follower, aweme_id, desc, response.content)
                 print("下载完成")
                 done.append(aweme_id)
+            else:
+                print(aweme_id+"已经下载过")
 
 
 def download_favorite():
@@ -159,7 +161,7 @@ def download_photo(src, i, aweme_id, desc, author_dir):
         sys.exit(0)
 
 
-def download_imgs():
+def download_aweme_photos():
     secid2user = {}
     for line in open('followers.txt', encoding='utf-8'):
         user, sec_uid = line.rstrip().split(':')
@@ -206,4 +208,4 @@ if __name__ == '__main__':
     # download_favorite()
     download_from_txt()
     # download_from_excel()
-    download_imgs()
+    download_aweme_photos()
