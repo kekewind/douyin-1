@@ -4,14 +4,15 @@ import sys
 
 from utils import write2mongodb
 from utils import write2mysql
-import requests
-import re
-import json
 from utils import log2file
 from utils import get_database_videos
 from utils import datas_process
-from utils import db, cursor
 from utils import get_downloadurl
+from utils import update_user_videos
+from utils import download_new_videos
+import requests
+import re
+import json
 logger = log2file('download.log', 'a', time=True)
 headers = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36',
@@ -31,8 +32,6 @@ def get_desc_src(aweme_id, mysql_data, mongodb_data, user):
         datas_process(
             response_json['item_list'])[0],
         user,
-        db,
-        cursor,
         mysql_data)
     # 将windows中文件名不支持的字符删除
     desc = re.sub(
@@ -41,38 +40,6 @@ def get_desc_src(aweme_id, mysql_data, mongodb_data, user):
         response_json['item_list'][0]['desc'])
     src = get_downloadurl(aweme_id)
     return desc, src
-
-
-# 更新文件写入新的视频
-def update_user_videos(user, videos):
-    with open(f'followers/{user}.txt', mode='w', encoding='utf-8') as f:
-        for video in videos:
-            f.write(video)
-            f.write('\n')
-
-
-def download_new_videos(user, number):
-    path = 'F:/douyin/' + user
-    videos = open(f'followers/{user}.txt',
-                  encoding='utf-8').readlines()[:number]
-    for video in videos:
-        aweme_id, desc, src = video.rstrip().split("==")
-        filename = aweme_id + "_" + desc
-        savepath = path + "/" + filename + ".mp4"
-        response = requests.get(
-            url=src,
-            headers={
-                'User-Agent': 'Mozilla/5.0 (Android 5.1.1; Mobile; rv:68.0) Gecko/68.0 Firefox/68.0',
-            },
-            timeout=10).content
-        with open(savepath, 'wb') as f:
-            f.write(response)
-            logger.info(video[0:19] + "\t下载完成")
-        if os.path.getsize(savepath) < 2:
-            logger.info(video[0:19] + "\t下载出错，文件大小不正常，建议检查下程序")
-            os.remove(savepath)
-            sys.exit(0)
-
 
 
 def main():
@@ -104,10 +71,11 @@ def main():
                 videos.insert(0, video)
                 add_new += 1
         f.close()
+        # 将新的视频写入txt
         update_user_videos(user, videos)
         logger.info(len(new_aweme_ids))
         if add_new > 0:
-            download_new_videos(user, add_new)
+            download_new_videos(user, add_new,logger,os,sys)
             logger.info(f'{user}新增了{add_new}个视频')
     logger.info("*" * 80 + '\n')
 
