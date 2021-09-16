@@ -121,7 +121,7 @@ def download_from_txt():
                 print("下载完成")
                 done.append(aweme_id)
             else:
-                print(aweme_id+"已经下载过")
+                print(aweme_id + "已经下载过")
 
 
 def download_favorite():
