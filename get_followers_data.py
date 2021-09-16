@@ -77,7 +77,7 @@ if __name__ == "__main__":
             if user_awemes_videos > 0:
                 write2excel(videos_data, user)
                 write2txt(videos_data, user)
-                write2mysql(videos_data, user, db, cursor, mysql_data)
+                write2mysql(videos_data, user, mysql_data)
             else:
                 # 没有视频，只创建txt文件
                 logger.info(user + "\t作品中没有一个视频，只创建空文件")
