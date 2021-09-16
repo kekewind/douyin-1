@@ -22,6 +22,45 @@ db = pymysql.connect(
 cursor = db.cursor()
 
 
+# 更新文件写入新的视频
+def update_user_videos(user, videos):
+    with open(f'followers/{user}.txt', mode='w', encoding='utf-8') as f:
+        for video in videos:
+            f.write(video)
+            f.write('\n')
+
+
+def download_new_videos(user, number,logger,os,sys):
+    path = 'F:/douyin/' + user
+    videos = open(f'followers/{user}.txt',
+                  encoding='utf-8').readlines()[:number]
+    for video in videos:
+        aweme_id, desc, src = video.rstrip().split("==")
+        filename = aweme_id + "_" + desc
+        savepath = path + "/" + filename + ".mp4"
+        try:
+            response = requests.get(
+                url=src,
+                headers={
+                    'User-Agent': 'Mozilla/5.0 (Android 5.1.1; Mobile; rv:68.0) Gecko/68.0 Firefox/68.0',
+                },
+                timeout=10).content
+        except Exception as e:
+            logger.info(e)
+        else:
+            with open(savepath, 'wb') as f:
+                f.write(response)
+                logger.info(video[0:19] + "\t下载完成")
+            if os.path.getsize(savepath) < 2:
+                logger.info(video[0:19] + "\t下载出错，文件大小不正常，建议检查下程序")
+                os.remove(savepath)
+                sys.exit(0)
+
+
+def download_photos_aweme(photos_aweme):
+    pass
+
+
 def get_downloadurl(aweme_id):
     data = {
         'url': 'https://www.douyin.com/video/{}'.format(aweme_id)
@@ -72,7 +111,7 @@ def mysql_connect():
     return db, cursor
 
 
-def write2mysql(datas, username, db, cursor, mysql_data):
+def write2mysql(datas, username, mysql_data):
     for data in datas:
         if data[0] in mysql_data:
             continue
@@ -99,7 +138,7 @@ def datas_process(userdata):
             videos_data.append([aweme_id, desc, src])
         elif item['aweme_type'] == 2:
             photo_aweme_num += 1
-    return videos_data,photo_aweme_num
+    return videos_data, photo_aweme_num
 
 
 def truncateDataBase():
@@ -146,7 +185,7 @@ def dumptxt(file):
             f.write(aweme)
 
 
-def log2file(filename,mode,time=False):
+def log2file(filename, mode, time=False):
     import logging
     logger = logging.getLogger('get_latest')
     logger.setLevel(logging.INFO)
