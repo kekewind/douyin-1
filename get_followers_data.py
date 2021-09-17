@@ -45,6 +45,7 @@ def get_videos(sec_uid):
 
 
 if __name__ == "__main__":
+    logger.info('开始这次任务，获取所有关注的所有作品')
     all_aweme = 0
     all_video_aweme = 0
     all_photo_aweme = 0
@@ -56,11 +57,11 @@ if __name__ == "__main__":
         for item in f.readlines():
             user_secid.append(item.rstrip())
     error_user = []
-    for item in user_secid:
+    for i,item in enumerate(user_secid,start=1):
         user, sec_id = item.split(':')
         users.append(user)
         user_video_datas = []
-        logger.info(user + " " + sec_id)
+        logger.info(f"第{i}个" + user + " " + sec_id)
         try:
             user_video_datas = get_videos(sec_id)
             # 写入MySQL,excel,TXT中的数据与mongod的不一样
@@ -89,6 +90,7 @@ if __name__ == "__main__":
                 write2mongodb(user_video_datas, mongodb_data)
             else:
                 logger.info(user + "\t咋一个作品都没有啊")
+        logger.info(user + f"获取完成,还剩{len(user_secid)-i}个")
     cursor.close()
     db.close()
     # 获取信息后直接下载
@@ -100,7 +102,8 @@ if __name__ == "__main__":
     distinct_usersnum = len(distinct_user)
     logger.info(f"本次运行一共获取{usersnum}个follower关注的数据")
     if len(error_user) > 0:
-        logger.info("其中出错的foller：" + str(error_user)[1:-1])
+        logger.info(f"出错的foller有{len(error_user)}个")
+        logger.info("他们是：" + str(error_user)[1:-1])
     logger.info(f"剔除重名和出错的，一共有{distinct_usersnum}个follower，他们是:")
     for i in range(0, len(distinct_user), 5):
         j = i
@@ -113,3 +116,5 @@ if __name__ == "__main__":
         logger.info(info)
     logger.info(
         f"这么多关注中一共有{all_aweme}个作品，其中有{all_video_aweme}个视频，其他的{all_aweme-all_video_aweme}个都是图片类型作品")
+    logger.info('任务结束')
+    logger.info("*" * 80 + '\n')
