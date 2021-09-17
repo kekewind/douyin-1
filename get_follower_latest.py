@@ -6,7 +6,8 @@ from utils import datas_process
 from utils import get_database_videos
 from utils import log2file
 from utils import download_new_videos
-from download import download_aweme_photos
+from download import download_photo
+import re
 import json
 import sys
 import requests
@@ -35,6 +36,35 @@ def get_user_new(sec_uid, max_cursor, user_awemes):
     return user_new_add, iscontinue, data_json['max_cursor']
 
 
+def download_photo_aweme(aweme, username):
+    rootdir = r"F:\douyin\images"
+    author_dir = rootdir + os.sep + username
+    if not os.path.exists(author_dir):
+        os.makedirs(author_dir)
+    rs = requests.get(
+        url='https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids={}&dytk='.format(
+            aweme[0]),
+        headers=headers,
+        timeout=5).text
+    response_json = json.loads(rs)
+    desc = re.sub('[\\/:*?"<>|\n]', '', aweme[1])
+    aweme_images = response_json['item_list'][0]['images']
+    if aweme_images is None:
+        download_photo(
+            src=response_json['item_list'][0]['image_infos'][0]['label_large']['url_list'][0],
+            i=0,
+            aweme_id=aweme[0],
+            desc=desc,
+            author_dir=author_dir)
+    for i in range(len(aweme_images)):
+        download_photo(
+            src=aweme_images[i]['url_list'][0],
+            i=i,
+            aweme_id=aweme[0],
+            desc=desc,
+            author_dir=author_dir)
+
+
 if __name__ == '__main__':
     mysql_data, mongodb_data = get_database_videos()
     all_user_new_aweme = 0
@@ -48,6 +78,7 @@ if __name__ == '__main__':
         # 用户最新的图片aweme数量
         user_latest_photos_aweme_nums = 0
         # 用来保存图片型的aweme
+        user_latest_photos_aweme = []
         logger.info(user + " is start")
         try:
             # 已经获取过的aweme
@@ -60,6 +91,7 @@ if __name__ == '__main__':
             logger.info(f"{user} has error")
             sys.exit(0)
         else:
+            # 已经获取过的aweme的aweme_id
             aweme_ids = [video[0:19] for video in videos]
             max_cursor = 0
             while True:
@@ -81,26 +113,30 @@ if __name__ == '__main__':
                     new_aweme_id = aweme['aweme_id']
                     desc = aweme['desc']
                     src = aweme['video']['play_addr']['url_list'][0]
-                    video = new_aweme_id + " == " + desc + " == " + src
+                    video = new_aweme_id + "==" + desc + "==" + src
                     videos.insert(0, video)
                     user_latest_videos_aweme_nums += 1
                 elif aweme['aweme_type'] == 2:
+                    user_latest_photos_aweme.append(
+                        [aweme['aweme_id'], aweme['desc']])
                     user_latest_photos_aweme_nums += 1
-            # 有视频aweme，则写入txt
+            # 有视频aweme，则写入txt，并下载视频
             if user_latest_videos_aweme_nums > 0:
+                # 下载视频
+                download_new_videos(
+                    user, user_latest_videos_aweme_nums, logger, os, sys)
+                # 写入txt
                 update_user_videos(user, videos)
             # 有图片aweme，则下载
             if user_latest_photos_aweme_nums > 0:
-                user_images = os.listdir(fr'F:\douyin\images\{user}')
-                photos_awemes = [photo[0:19] for photo in user_images]
-                # Todo 下图片的函数
-                for aweme in user:
-                    pass
-                # all_user_new_photos_aweme += user_latest_photos_aweme_nums
-            download_new_videos(user, user_latest_videos_aweme_nums,logger,os,sys)
+                for aweme in user_latest_photos_aweme:
+                    download_photo_aweme(aweme, user)
             logger.info(f'{user}新增了{user_latest_aweme_nums}个作品')
-            logger.info(f'其中有{user_latest_videos_aweme_nums}个视频作品，{user_latest_photos_aweme_nums}个图片作品')
+            infos = "其中有:"
+            if user_latest_videos_aweme_nums > 0:
+                infos += f"{user_latest_videos_aweme_nums}个视频作品"
+            if user_latest_photos_aweme_nums > 0:
+                infos += f"{user_latest_photos_aweme_nums}个图片作品"
+            logger.info(infos)
         else:
             logger.info(f'{user}没有新作品发布')
-    if all_user_new_photos_aweme > 0:
-        download_aweme_photos()
