@@ -241,8 +241,8 @@ class douyin():
 if __name__ == '__main__':
     print("请输入分享地址url，形如：https://v.douyin.com/dBMSvq1/ \n"
                     "或者 https://www.douyin.com/user/MS4wLjABAAAA9ZT9Oi0o4cnYo-u7ndgkToQyRmLup5YDgzEQLb-5WCrUWWiRZEI3xBuNG5QkMcOf?previous_page=app_code_link"
-                    "\n-->")
+                    "")
     while True:
-        url = input()
+        url = input('-->')
         douyin(url).start()
         print("开始下一个，请继续输入分享主页，如果不需要请关闭程序")
