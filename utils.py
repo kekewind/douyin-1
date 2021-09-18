@@ -30,7 +30,7 @@ def update_user_videos(user, videos):
             f.write('\n')
 
 
-def download_new_videos(user, number,logger,os,sys):
+def download_new_videos(user, number, logger, os, sys):
     path = 'F:/douyin/' + user
     videos = open(f'followers/{user}.txt',
                   encoding='utf-8').readlines()[:number]
@@ -46,13 +46,14 @@ def download_new_videos(user, number,logger,os,sys):
                 },
                 timeout=10).content
         except Exception as e:
-            logger.info(e)
+            logger[0].info(e)
         else:
             with open(savepath, 'wb') as f:
                 f.write(response)
-                logger.info(video[0:19] + "\t下载完成")
+                logger[0].info(video[0:19] + "\t下载完成")
+                logger[1].info(user + " " + video[0:19] + "\t下载完成")
             if os.path.getsize(savepath) < 2:
-                logger.info(video[0:19] + "\t下载出错，文件大小不正常，建议检查下程序")
+                logger[0].info(video[0:19] + "\t下载出错，文件大小不正常，建议检查下程序")
                 os.remove(savepath)
                 sys.exit(0)
 
@@ -185,22 +186,23 @@ def dumptxt(file):
             f.write(aweme)
 
 
-def log2file(filename, mode, time=False):
+def log2file(name, filename, ch=False, mode='a', time=False):
     import logging
-    logger = logging.getLogger('get_latest')
+    logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
-    filepath = filename
+    filepath = f'{filename}.log'
     hadler = logging.FileHandler(filepath, mode=mode, encoding='utf-8')
     hadler.setLevel(logging.NOTSET)
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.INFO)
     if time:
         format = logging.Formatter("%(asctime)s - %(message)s")
     else:
         format = logging.Formatter("%(message)s")
     hadler.setFormatter(format)
-    ch.setFormatter(format)
-    logger.addHandler(ch)
+    if ch:
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.INFO)
+        ch.setFormatter(format)
+        logger.addHandler(ch)
     logger.addHandler(hadler)
     logger.info("*" * 80)
     return logger
