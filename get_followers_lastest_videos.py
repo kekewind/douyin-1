@@ -1,7 +1,7 @@
 # 获取各个正在关注人最新发布的几个视频
 import os
 import sys
-
+import time
 from utils import write2mongodb
 from utils import write2mysql
 from utils import log2file
@@ -13,7 +13,8 @@ from utils import download_new_videos
 import requests
 import re
 import json
-logger = log2file('download.log', 'a', time=True)
+logger = log2file('main', '获取关注们最新的视频', ch=True, mode='w', time=True)
+logger2 = log2file('dwoload', '下载', mode='a')
 headers = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36',
     'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"',
@@ -58,12 +59,17 @@ def main():
             video.rstrip() for video in open(
                 f'followers/{user}.txt',
                 encoding='utf-8').readlines()]
-        response = requests.get(
-            f"https://www.douyin.com/user/{sec_uid}",
-            headers=headers)
+        while True:
+            response = requests.get(
+                f"https://www.douyin.com/user/{sec_uid}",
+                headers=headers)
+            if response.text.startswith('<!DOCTYPE html>'):
+                break
+            time.sleep(3)
         new_aweme_ids = re.findall(
             'href="https://www.douyin.com/video/(\\d{1,19})',
             response.text)
+        logger.info(len(new_aweme_ids))
         for new_aweme_id in new_aweme_ids:
             if new_aweme_id not in aweme_ids:
                 desc, src = get_desc_src(
@@ -74,10 +80,11 @@ def main():
         f.close()
         # 将新的视频写入txt
         update_user_videos(user, videos)
-        logger.info(len(new_aweme_ids))
         if add_new > 0:
-            download_new_videos(user, add_new,logger,os,sys)
+            download_new_videos(user, add_new, [logger, logger2], os, sys)
             logger.info(f'{user}新增了{add_new}个视频')
+        else:
+            logger.info(f'{user}没有新增视频')
     logger.info('任务结束')
     logger.info("*" * 80 + '\n')
 
