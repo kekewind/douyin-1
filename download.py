@@ -120,8 +120,8 @@ def download_from_txt():
                 save_video(follower, aweme_id, desc, response.content)
                 print("下载完成")
                 done.append(aweme_id)
-            else:
-                print(aweme_id + "已经下载过")
+            # else:
+            #     print(aweme_id + "已经下载过")
 
 
 def download_favorite():
