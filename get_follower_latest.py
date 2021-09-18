@@ -12,7 +12,8 @@ import json
 import sys
 import requests
 import os
-logger = log2file('followers_latest.log', 'w', True)
+logger = log2file('main','获取关注们最新的作品',ch=True,mode='w', time=True)
+logger2 = log2file('dwoload','下载', mode='a')
 headers = {
     'user-agent': 'Mozilla/5.0 (Linux; Android 8.0; Pixel 2 Build/OPD3.170816.012) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Mobile Safari/537.36 Edg/87.0.664.66'
 }
@@ -124,7 +125,7 @@ if __name__ == '__main__':
             if user_latest_videos_aweme_nums > 0:
                 # 下载视频
                 download_new_videos(
-                    user, user_latest_videos_aweme_nums, logger, os, sys)
+                    user, user_latest_videos_aweme_nums, [logger,logger2], os, sys)
                 # 写入txt
                 update_user_videos(user, videos)
             # 有图片aweme，则下载
@@ -139,4 +140,4 @@ if __name__ == '__main__':
                 infos += f"{user_latest_photos_aweme_nums}个图片作品"
             logger.info(infos)
         else:
-            logger.info(f'{user}没有新作品发布')
+            logger.info(f'{user}没有最新的作品')
