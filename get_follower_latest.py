@@ -113,7 +113,7 @@ if __name__ == '__main__':
                 if aweme['aweme_type'] == 4:
                     new_aweme_id = aweme['aweme_id']
                     desc = aweme['desc']
-                    src = aweme['video']['play_addr']['url_list'][0]
+                    src = re.sub('watermark=1', 'watermark=0', aweme['video']['download_addr']['url_list'][1])
                     video = new_aweme_id + "==" + desc + "==" + src
                     videos.insert(0, video)
                     user_latest_videos_aweme_nums += 1
@@ -123,11 +123,11 @@ if __name__ == '__main__':
                     user_latest_photos_aweme_nums += 1
             # 有视频aweme，则写入txt，并下载视频
             if user_latest_videos_aweme_nums > 0:
+                # 写入txt
+                update_user_videos(user, videos)
                 # 下载视频
                 download_new_videos(
                     user, user_latest_videos_aweme_nums, [logger,logger2], os, sys)
-                # 写入txt
-                update_user_videos(user, videos)
             # 有图片aweme，则下载
             if user_latest_photos_aweme_nums > 0:
                 for aweme in user_latest_photos_aweme:

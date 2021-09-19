@@ -1,6 +1,8 @@
 import os
 import re
 import sys
+import time
+
 import xlwings as xw
 import requests
 from utils import get_downloadurl
@@ -93,13 +95,21 @@ def download_from_txt():
                 src = video_split[-1]
                 desc = str(video_split[21:-2 - len(src)])
             if aweme_id not in done:
-                print(follower, video, end='\t')
-                response = requests.get(
-                    url=src,
-                    headers={
-                        'User-Agent': 'Mozilla/5.0 (Android 5.1.1; Mobile; rv:68.0) Gecko/68.0 Firefox/68.0',
-                    },
-                    timeout=10)
+                print(src)
+                print(follower, aweme_id, desc, end='\t')
+                while True:
+                    try:
+                        response = requests.get(
+                            url=src,
+                            headers={
+                                'User-Agent': 'Mozilla/5.0 (Android 5.1.1; Mobile; rv:68.0) Gecko/68.0 Firefox/68.0',
+                            },
+                            timeout=10)
+                    except Exception as e:
+                        print(e)
+                        time.sleep(6)
+                    else:
+                        break
                 if response.status_code == 403:
                     print(
                         "\n" +

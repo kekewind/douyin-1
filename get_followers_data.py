@@ -1,7 +1,7 @@
 # 获取正在关注的人的所有上传视频
 # https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=7006608594028334347
 from utils import *
-logger = log2file('get_followers_data.log', 'w')
+logger = log2file('get_followers_data','获取关注全部data',ch=True,mode='w')
 
 
 def get_one_page_videos_data(sec_uid, signature, max_cursor):
@@ -32,7 +32,7 @@ def get_one_page_info(sec_uid, max_cursor):
             return page_video_data, None
 
 
-def get_videos(sec_uid):
+def get_awemes(sec_uid):
     max_cursor = 0
     all_data = []
     while True:
@@ -52,6 +52,7 @@ if __name__ == "__main__":
     users = []
     user_secid = []
     # 获得数据库中已经写过的信息
+    # truncateDataBase()
     mysql_data, mongodb_data = get_database_videos()
     with open('followers.txt', encoding='utf-8') as f:
         for item in f.readlines():
@@ -60,12 +61,13 @@ if __name__ == "__main__":
     for i,item in enumerate(user_secid,start=1):
         user, sec_id = item.split(':')
         users.append(user)
-        user_video_datas = []
+        user_aweme_datas = []
         logger.info(f"第{i}个" + user + " " + sec_id)
+        logger.info(f"https://www.douyin.com/user/{sec_id}")
         try:
-            user_video_datas = get_videos(sec_id)
+            user_aweme_datas = get_awemes(sec_id)
             # 写入MySQL,excel,TXT中的数据与mongod的不一样
-            videos_data, photo_aweme_num = datas_process(user_video_datas)
+            videos_data, photo_aweme_num = datas_process(user_aweme_datas)
             all_photo_aweme += photo_aweme_num
         except Exception as e:
             logger.info(e)
@@ -84,10 +86,10 @@ if __name__ == "__main__":
                 logger.info(user + "\t作品中没有一个视频，只创建空文件")
                 write2txt(videos_data, user)
         finally:
-            user_awemes_nums = len(user_video_datas)
+            user_awemes_nums = len(user_aweme_datas)
             all_aweme += user_awemes_nums
             if user_awemes_nums > 0:
-                write2mongodb(user_video_datas, mongodb_data)
+                write2mongodb(user_aweme_datas, mongodb_data)
             else:
                 logger.info(user + "\t咋一个作品都没有啊")
         logger.info(user + f"获取完成,还剩{len(user_secid)-i}个")
@@ -104,6 +106,8 @@ if __name__ == "__main__":
     if len(error_user) > 0:
         logger.info(f"出错的foller有{len(error_user)}个")
         logger.info("他们是：" + str(error_user)[1:-1])
+    else:
+        logger.info("没有出粗的follower")
     logger.info(f"剔除重名和出错的，一共有{distinct_usersnum}个follower，他们是:")
     for i in range(0, len(distinct_user), 5):
         j = i

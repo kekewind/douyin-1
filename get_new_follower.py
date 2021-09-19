@@ -3,6 +3,7 @@ import json
 import os
 import re
 import sys
+import time
 import requests
 from utils import write2mysql
 from utils import write2excel
@@ -41,7 +42,10 @@ class douyin():
                 if aweme['aweme_type'] == 4:
                     aweme_id = aweme['aweme_id']
                     desc = re.sub('[\\/:*?"<>|\n]', '', aweme['desc'])
-                    src = aweme['video']['play_addr']['url_list'][0]
+                    src = re.sub(
+                        'watermark=1',
+                        'watermark=0',
+                        aweme['video']['download_addr']['url_list'][1])
                     self.save_video_aweme(username, aweme_id, desc, src)
                     self.user_video_aweme.append(aweme)
                     self.video_aweme_num += 1
@@ -144,12 +148,20 @@ class douyin():
 
     def download_video(self, aweme_id, src):
         # 下载视频
-        response = requests.get(
-            url=src,
-            headers={
-                'User-Agent': 'Mozilla/5.0 (Android 5.1.1; Mobile; rv:68.0) Gecko/68.0 Firefox/68.0',
-            },
-            timeout=10)
+        print(aweme_id, end='\t')
+        while True:
+            try:
+                response = requests.get(
+                    url=src,
+                    headers={
+                        'User-Agent': 'Mozilla/5.0 (Android 5.1.1; Mobile; rv:68.0) Gecko/68.0 Firefox/68.0',
+                    },
+                    timeout=10)
+            except Exception as e:
+                print(e)
+                time.sleep(6)
+            else:
+                break
         if response.status_code == 403:
             print(
                 "\n" +
@@ -198,7 +210,7 @@ class douyin():
             print(aweme_id + "\t下载出错，文件大小不正常，建议检查下程序")
             os.remove(savepath)
             sys.exit(0)
-        print(aweme_id, desc, '下载完成，文件保存在：' + savepath)
+        print(desc, '下载完成，文件保存在：' + savepath)
 
     def download_save_photo(self, src, i, aweme_id, desc, author_dir):
         filename = aweme_id + "_" + desc + "_" + str(i + 1) + ".jpg"
@@ -231,7 +243,7 @@ class douyin():
             line.rstrip() for line in open(
                 'followers.txt',
                 encoding='utf-8').readlines()]
-        followers.insert(0,username + ":" + sec_uid)
+        followers.insert(0, username + ":" + sec_uid)
         with open('followers.txt', encoding='utf-8', mode='w') as f:
             for follower in followers:
                 f.write(follower)
@@ -240,8 +252,7 @@ class douyin():
 
 if __name__ == '__main__':
     print("请输入分享地址url，形如：https://v.douyin.com/dBMSvq1/ \n"
-                    "或者 https://www.douyin.com/user/MS4wLjABAAAA9ZT9Oi0o4cnYo-u7ndgkToQyRmLup5YDgzEQLb-5WCrUWWiRZEI3xBuNG5QkMcOf?previous_page=app_code_link"
-                    "")
+          "或者 https://www.douyin.com/user/MS4wLjABAAAA9ZT9Oi0o4cnYo-u7ndgkToQyRmLup5YDgzEQLb-5WCrUWWiRZEI3xBuNG5QkMcOf?previous_page=app_code_link")
     while True:
         url = input('-->')
         douyin(url).start()

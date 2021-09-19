@@ -27,19 +27,17 @@ def get_desc_src(aweme_id, mysql_data, mongodb_data, user):
         url='https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids={}&dytk='.format(aweme_id), headers=headers,
         timeout=5).text
     response_json = json.loads(response)
-    # 将新的作品写入到mysql和mongodb
+    # 将新的作品写入mongodb
     write2mongodb(response_json['item_list'], mongodb_data)
-    write2mysql(
-        datas_process(
-            response_json['item_list'])[0],
-        user,
-        mysql_data)
     # 将windows中文件名不支持的字符删除
     desc = re.sub(
         '[\\\\/:*?"<>|\n]',
         '',
         response_json['item_list'][0]['desc'])
-    src = get_downloadurl(aweme_id)
+    vid = response_json['item_list'][0]['video']['vid']
+    src = f'https://api.amemv.com/aweme/v1/play/?video_id={vid}&line=1&ratio=540p&watermark=0&media_type=4&vr_type=0&improve_bitrate=0&logo_name=aweme_search_suffix&source=PackSourceEnum_DOUYIN_REFLOW'
+    # 将新的作品写入mysql
+    write2mysql([aweme_id,desc,src],user,mysql_data)
     return desc, src
 
 
@@ -60,8 +58,10 @@ def main():
                 f'followers/{user}.txt',
                 encoding='utf-8').readlines()]
         while True:
+            url = f"https://www.douyin.com/user/{sec_uid}"
+            print(url)
             response = requests.get(
-                f"https://www.douyin.com/user/{sec_uid}",
+                url=url,
                 headers=headers)
             if response.text.startswith('<!DOCTYPE html>'):
                 break
@@ -74,7 +74,7 @@ def main():
             if new_aweme_id not in aweme_ids:
                 desc, src = get_desc_src(
                     new_aweme_id, mysql_data, mongodb_data, user)
-                video = new_aweme_id + " == " + desc + " == " + src
+                video = new_aweme_id + "==" + desc + "==" + src
                 videos.insert(0, video)
                 add_new += 1
         f.close()

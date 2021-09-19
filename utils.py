@@ -135,7 +135,7 @@ def datas_process(userdata):
         if item['aweme_type'] == 4:
             aweme_id = item['aweme_id']
             desc = re.sub('[\\/:*?"<>|\n]', '', item['desc'])
-            src = item['video']['play_addr']['url_list'][0]
+            src = re.sub('watermark=1', 'watermark=0', item['video']['download_addr']['url_list'][1])
             videos_data.append([aweme_id, desc, src])
         elif item['aweme_type'] == 2:
             photo_aweme_num += 1
