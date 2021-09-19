@@ -6,8 +6,6 @@ from utils import write2mongodb
 from utils import write2mysql
 from utils import log2file
 from utils import get_database_videos
-from utils import datas_process
-from utils import get_downloadurl
 from utils import update_user_videos
 from utils import download_new_videos
 import requests
@@ -37,7 +35,7 @@ def get_desc_src(aweme_id, mysql_data, mongodb_data, user):
     vid = response_json['item_list'][0]['video']['vid']
     src = f'https://api.amemv.com/aweme/v1/play/?video_id={vid}&line=1&ratio=540p&watermark=0&media_type=4&vr_type=0&improve_bitrate=0&logo_name=aweme_search_suffix&source=PackSourceEnum_DOUYIN_REFLOW'
     # 将新的作品写入mysql
-    write2mysql([aweme_id,desc,src],user,mysql_data)
+    write2mysql([[aweme_id, desc, src]], user, mysql_data)
     return desc, src
 
 
@@ -57,9 +55,9 @@ def main():
             video.rstrip() for video in open(
                 f'followers/{user}.txt',
                 encoding='utf-8').readlines()]
+        url = f"https://www.douyin.com/user/{sec_uid}"
+        logger.info(url)
         while True:
-            url = f"https://www.douyin.com/user/{sec_uid}"
-            print(url)
             response = requests.get(
                 url=url,
                 headers=headers)
