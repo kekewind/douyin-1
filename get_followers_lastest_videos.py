@@ -58,12 +58,18 @@ def main():
         url = f"https://www.douyin.com/user/{sec_uid}"
         logger.info(url)
         while True:
-            response = requests.get(
-                url=url,
-                headers=headers)
+            while True:
+                try:
+                    response = requests.get(
+                        url=url,
+                        headers=headers)
+                except Exception as e:
+                    time.sleep(8)
+                else:
+                    break
             if response.text.startswith('<!DOCTYPE html>'):
                 break
-            time.sleep(3)
+            time.sleep(8)
         new_aweme_ids = re.findall(
             'href="https://www.douyin.com/video/(\\d{1,19})',
             response.text)
