@@ -2,7 +2,6 @@ import os
 import re
 import sys
 import time
-
 import xlwings as xw
 import requests
 from utils import get_downloadurl
@@ -139,13 +138,21 @@ def download_favorite():
     for video in open('favorite.txt', encoding='utf-8'):
         aweme_id, desc, src = video.rstrip().split("==")
         if aweme_id not in favorites:
-            print(video.rstrip(), end='\t')
-            response = requests.get(
-                url=src,
-                headers={
-                    'User-Agent': 'Mozilla/5.0 (Android 5.1.1; Mobile; rv:68.0) Gecko/68.0 Firefox/68.0',
-                },
-                timeout=10).content
+            print(src)
+            print(aweme_id,desc, end='\t')
+            while True:
+                try:
+                    response = requests.get(
+                        url=src,
+                        headers={
+                            'User-Agent': 'Mozilla/5.0 (Android 5.1.1; Mobile; rv:68.0) Gecko/68.0 Firefox/68.0',
+                        },
+                        timeout=10).content
+                except Exception as e:
+                    print(e)
+                    time.sleep(7)
+                else:
+                    break
             save_video(None, aweme_id, desc, response)
             print("下载完成")
             favorites.append(aweme_id)
@@ -196,6 +203,8 @@ def download_aweme_photos():
             headers=headers,
             timeout=5).text
         response_json = json.loads(rs)
+        if len(response_json['item_list']) == 0:
+            continue
         aweme_images = response_json['item_list'][0]['images']
         if aweme_images is None:
             download_photo(
@@ -215,7 +224,7 @@ def download_aweme_photos():
 
 
 if __name__ == '__main__':
-    # download_favorite()
+    download_favorite()
     download_from_txt()
     # download_from_excel()
     download_aweme_photos()

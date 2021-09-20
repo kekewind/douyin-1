@@ -1,7 +1,6 @@
 # mitmdump抓包脚本
 import json
 import re
-
 import pymysql
 from pymongo import MongoClient
 host = 'localhost'
@@ -19,6 +18,7 @@ client = MongoClient("mongodb://localhost:27017/")
 database = client["douyin"]
 collection = database["favorites"]
 cursor = db.cursor()
+print("="*80)
 
 
 def response(flow):
@@ -27,20 +27,22 @@ def response(flow):
         with open('favorite.txt', 'a', encoding='utf-8') as f:
             for aweme in json.loads(flow.response.text)['aweme_list']:
                 if 'play_addr' in aweme['video']:
+                    aweme_id = aweme['aweme_id']
                     desc = re.sub('[\\\\/:*?"<>|\n]', '', aweme['desc'])
+                    src = re.sub('watermark=1', 'watermark=0', aweme['video']['download_addr']['url_list'][-1])
                     f.write(
-                        aweme['aweme_id'] +
+                        aweme_id +
                         "==" +
                         desc +
                         "==" +
-                        aweme['video']['play_addr']['url_list'][0])
+                        src)
                     f.write('\n')
                 # 写入mongodb
                 collection.insert_one(dict(aweme))
                 # 写入mysql
-                aweme_id = aweme['aweme_id']
+                aweme_id = aweme_id
                 aweme_type = aweme['aweme_type']
-                download_addr = aweme['video']['play_addr']['url_list'][0]
+                download_addr = src
                 create_time = aweme['create_time']
                 author_nickname = aweme['author']['nickname']
                 author_sec_uid = aweme['author']['sec_uid']
@@ -65,7 +67,6 @@ def response(flow):
                 except BaseException as e:
                     print(e)
                     db.rollback()
-            cursor.close()
 
     # 将关注的人存入txt文件
     # if 'aweme/v1/user/following/list' in flow.request.url:
