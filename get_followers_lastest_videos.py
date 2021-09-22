@@ -21,9 +21,15 @@ headers = {
 
 
 def get_desc_src(aweme_id, mysql_data, mongodb_data, user):
-    response = requests.get(
-        url='https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids={}&dytk='.format(aweme_id), headers=headers,
-        timeout=5).text
+    while True:
+        try:
+            response = requests.get(
+                url='https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids={}&dytk='.format(aweme_id), headers=headers,
+                timeout=5).text
+        except Exception:
+            time.sleep(10)
+        else:
+            break
     response_json = json.loads(response)
     # 将新的作品写入mongodb
     write2mongodb(response_json['item_list'], mongodb_data)
