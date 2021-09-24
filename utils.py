@@ -51,11 +51,11 @@ def download_new_videos(user, number, logger, os, sys):
             with open(savepath, 'wb') as f:
                 f.write(response)
                 logger[0].info(video[0:19] + "\t下载完成")
-                logger[1].info(user + " " + video[0:19] + "\t下载完成")
             if os.path.getsize(savepath) < 2:
                 logger[0].info(video[0:19] + "\t下载出错，文件大小不正常，建议检查下程序")
                 os.remove(savepath)
                 sys.exit(0)
+            logger[1].info(user + " " + video[0:19] + "\t下载完成")
 
 
 def download_photos_aweme(photos_aweme):
@@ -204,5 +204,4 @@ def log2file(name, filename, ch=False, mode='a', time=False):
         ch.setFormatter(format)
         logger.addHandler(ch)
     logger.addHandler(hadler)
-    logger.info("*" * 80)
     return logger
