@@ -10,6 +10,7 @@ from utils import write2excel
 from utils import datas_process
 from utils import write2mongodb
 from utils import write2txt
+from download import save_check_photo
 rootdir = r'F:\douyin\images'
 
 
@@ -227,17 +228,7 @@ class douyin():
         if os.path.exists(savepath):
             return
         response = requests.get(url=src, headers=self.headers)
-        with open(savepath, mode='wb') as f:
-            try:
-                f.write(response.content)
-                print(savepath + "\t下载完成")
-            except Exception as e:
-                print(aweme_id + "\t下载图片出错")
-                print(e)
-        if os.path.getsize(savepath) < 2:
-            print(aweme_id + "\t下载出错，文件大小不正常，建议检查下程序")
-            os.remove(savepath)
-            sys.exit(0)
+        save_check_photo(savepath,aweme_id,response)
         print(filename, '图片下载完成，文件保存在：' + savepath)
 
     def update_database(self, username, sec_uid):
