@@ -1,4 +1,5 @@
 # 获取用户最新的作品，不仅限与视频
+import time
 from utils import update_user_videos
 from utils import write2mysql
 from utils import write2mongodb
@@ -23,11 +24,21 @@ def get_user_new(sec_uid, max_cursor, user_awemes):
     iscontinue = False
     user_new_add = []
     signature = requests.get('http://8.9.15.155:3000/sign').text
-    response = requests.get(
-        f"https://www.iesdouyin.com/web/api/v2/aweme/post/?sec_uid={sec_uid}&count=30&max_cursor={max_cursor}&aid=1128&_signature={signature}&dytk=",
-        headers=headers)
+    # 控制速度
+    time.sleep(3)
+    while True:
+        try:
+            response = requests.get(
+                f"https://www.iesdouyin.com/web/api/v2/aweme/post/?sec_uid={sec_uid}&count=30&max_cursor={max_cursor}&aid=1128&_signature={signature}&dytk=",
+                headers=headers)
+        except Exception as e:
+            logger.info(e)
+            time.sleep(10)
+        else:
+            break
     data_json = json.loads(response.text)
     user_latest_aweme = data_json['aweme_list']
+    logger.info(len(user_latest_aweme))
     for aweme in user_latest_aweme:
         if aweme['aweme_id'] not in user_awemes:
             user_new_add.append(aweme)
@@ -50,21 +61,27 @@ def download_photo_aweme(aweme, username):
     response_json = json.loads(rs)
     desc = re.sub('[\\/:*?"<>|\n]', '', aweme[1])
     aweme_images = response_json['item_list'][0]['images']
+    # 只有一张图片：
     if aweme_images is None:
-        download_photo(
+        is_download = download_photo(
             src=response_json['item_list'][0]['image_infos'][0]['label_large']['url_list'][0],
             i=0,
             aweme_id=aweme[0],
             desc=desc,
             author_dir=author_dir)
-    for i in range(len(aweme_images)):
-        download_photo(
-            src=aweme_images[i]['url_list'][0],
-            i=i,
-            aweme_id=aweme[0],
-            desc=desc,
-            author_dir=author_dir)
-    logger2.info(username + " photo_aweme " + aweme[0] + "\t下载完成")
+        # 下载了
+        if is_download:
+            logger2.info(username + " photo_aweme " + aweme[0] + "\t下载完成")
+    else:
+        for i in range(len(aweme_images)):
+            is_download = download_photo(
+                src=aweme_images[i]['url_list'][0],
+                i=i,
+                aweme_id=aweme[0],
+                desc=desc,
+                author_dir=author_dir)
+        if is_download:
+            logger2.info(username + " photo_aweme " + aweme[0] + "\t下载完成")
 
 
 if __name__ == '__main__':
@@ -93,13 +110,17 @@ if __name__ == '__main__':
                 video.rstrip() for video in open(
                     f'followers/{user}.txt',
                     encoding='utf-8').readlines()]
+            try:
+                photos = [photo[0:19] for photo in os.listdir(fr'F:\douyin\images\{user}')]
+            except:
+                photos = []
         except Exception as e:
             logger.info(e)
             logger.info(f"{user} has error")
             sys.exit(0)
         else:
             # 已经获取过的aweme的aweme_id
-            aweme_ids = [video[0:19] for video in videos]
+            aweme_ids = [video[0:19] for video in videos] + list(set(photos))
             max_cursor = 0
             while True:
                 new, goahead, max_cursor = get_user_new(
