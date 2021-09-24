@@ -55,7 +55,7 @@ def download_new_videos(user, number, logger, os, sys):
                 logger[0].info(video[0:19] + "\t下载出错，文件大小不正常，建议检查下程序")
                 os.remove(savepath)
                 sys.exit(0)
-            logger[1].info(user + " " + video[0:19] + "\t下载完成")
+            logger[1].info(user + " video_aweme " + video[0:19] + "\t下载完成")
 
 
 def download_photos_aweme(photos_aweme):
