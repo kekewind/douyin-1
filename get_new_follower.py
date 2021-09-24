@@ -88,17 +88,25 @@ class douyin():
 
     def get_username_secuid(self):
         # 获取用户名和sec_id
-        try:
-            rs = requests.get(self.url, headers=self.headers)
-        except Exception as e:
-            print(e)
-        else:
-            sec_uid = re.search('/user/(.*)\\?', rs.url).group(1)
-            username = re.search(
-                '<title data-react-helmet="true">([\\s\\S]*?)</title>',
-                rs.text).group(1)[
-                0:-8]
-            return username, sec_uid
+        while True:
+            while True:
+                try:
+                    response = requests.get(
+                        url=self.url,
+                        headers=self.headers)
+                except Exception as e:
+                    time.sleep(8)
+                else:
+                    break
+            if response.text.startswith('<!DOCTYPE html>'):
+                break
+            time.sleep(8)
+        sec_uid = re.search('/user/(.*)\\?', response.url).group(1)
+        username = re.search(
+            '<title data-react-helmet="true">([\\s\\S]*?)</title>',
+            response.text).group(1)[
+            0:-8]
+        return username, sec_uid
 
     def get_user_awemes(self, username, sec_uid):
         # 获取用户所有的awemes
