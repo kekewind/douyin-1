@@ -46,8 +46,9 @@ def get_desc_src(aweme_id, mysql_data, mongodb_data, user):
 
 
 def main():
-    mysql_data, mongodb_data = get_database_videos()
+    logger.info("*" * 80)
     logger.info('开始这次任务，获取所有关注的最新视频')
+    mysql_data, mongodb_data = get_database_videos()
     for line in open('followers.txt', encoding='utf-8'):
         add_new = 0
         user, sec_uid = line.rstrip().split(':')
