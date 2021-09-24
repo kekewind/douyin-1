@@ -12,8 +12,8 @@ import json
 import sys
 import requests
 import os
-logger = log2file('main','获取关注们最新的作品',ch=True,mode='w', time=True)
-logger2 = log2file('dwoload','下载', mode='a')
+logger = log2file('main', '获取关注们最新的作品', ch=True, mode='w', time=True)
+logger2 = log2file('download', '下载', mode='a')
 headers = {
     'user-agent': 'Mozilla/5.0 (Linux; Android 8.0; Pixel 2 Build/OPD3.170816.012) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Mobile Safari/537.36 Edg/87.0.664.66'
 }
@@ -64,13 +64,18 @@ def download_photo_aweme(aweme, username):
             aweme_id=aweme[0],
             desc=desc,
             author_dir=author_dir)
+    logger2.info(username + " photo_aweme " + aweme[0] + "\t下载完成")
 
 
 if __name__ == '__main__':
+    logger.info("*" * 80)
+    logger.info('开始这次任务，获取所有关注的最新作品')
     mysql_data, mongodb_data = get_database_videos()
     all_user_new_aweme = 0
     all_user_new_photos_aweme = 0
-    for line in open('followers.txt', encoding='utf-8'):
+    user2sec_uid = open('followers.txt', encoding='utf-8').readlines()
+    usernum = len(user2sec_uid)
+    for i, line in enumerate(user2sec_uid, start=1):
         user, sec_uid = line.rstrip().split(':')
         # 用户最新的所有作品
         user_latest_awme = []
@@ -80,7 +85,8 @@ if __name__ == '__main__':
         user_latest_photos_aweme_nums = 0
         # 用来保存图片型的aweme
         user_latest_photos_aweme = []
-        logger.info(user + " is start")
+        logger.info(f"第{i}个 " + user + " is start")
+        logger.info(f'{user}的主页是：https://www.douyin.com/user/{sec_uid}')
         try:
             # 已经获取过的aweme
             videos = [
@@ -113,7 +119,10 @@ if __name__ == '__main__':
                 if aweme['aweme_type'] == 4:
                     new_aweme_id = aweme['aweme_id']
                     desc = aweme['desc']
-                    src = re.sub('watermark=1', 'watermark=0', aweme['video']['download_addr']['url_list'][1])
+                    src = re.sub(
+                        'watermark=1',
+                        'watermark=0',
+                        aweme['video']['download_addr']['url_list'][1])
                     video = new_aweme_id + "==" + desc + "==" + src
                     videos.insert(0, video)
                     user_latest_videos_aweme_nums += 1
@@ -127,7 +136,7 @@ if __name__ == '__main__':
                 update_user_videos(user, videos)
                 # 下载视频
                 download_new_videos(
-                    user, user_latest_videos_aweme_nums, [logger,logger2], os, sys)
+                    user, user_latest_videos_aweme_nums, [logger, logger2], os, sys)
             # 有图片aweme，则下载
             if user_latest_photos_aweme_nums > 0:
                 for aweme in user_latest_photos_aweme:
@@ -141,3 +150,4 @@ if __name__ == '__main__':
             logger.info(infos)
         else:
             logger.info(f'{user}没有最新的作品')
+        logger.info(user + f"完成,还剩{usernum - i}个")
