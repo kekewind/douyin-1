@@ -163,19 +163,12 @@ def download_photo(src, i, aweme_id, desc, author_dir):
     filepath = os.path.join(author_dir, filename)
     # 下载过了
     if os.path.exists(filepath):
-        return
+        # 返回没下载
+        return False
     response = requests.get(url=src, headers=headers)
-    with open(filepath, mode='wb') as f:
-        try:
-            f.write(response.content)
-            print(filepath + "\t下载完成")
-        except Exception as e:
-            print(aweme_id + "\t下载图片出错")
-            print(e)
-    if os.path.getsize(filepath) < 2:
-        print(aweme_id + "\t下载出错，文件大小不正常，建议检查下程序")
-        os.remove(filepath)
-        sys.exit(0)
+    save_check_photo(filepath,aweme_id,response)
+    # 返回下载了
+    return True
 
 
 def download_aweme_photos():
@@ -222,6 +215,18 @@ def download_aweme_photos():
                 desc=desc,
                 author_dir=author_dir)
 
+def save_check_photo(filepath,aweme_id,response):
+    with open(filepath, mode='wb') as f:
+        try:
+            f.write(response.content)
+            print(filepath + "\t下载完成")
+        except Exception as e:
+            print(aweme_id + "\t下载图片出错")
+            print(e)
+    if os.path.getsize(filepath) < 2:
+        print(aweme_id + "\t下载出错，文件大小不正常，建议检查下程序")
+        os.remove(filepath)
+        sys.exit(0)
 
 if __name__ == '__main__':
     download_favorite()
