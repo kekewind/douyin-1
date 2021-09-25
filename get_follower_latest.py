@@ -63,25 +63,22 @@ def download_photo_aweme(aweme, username):
     aweme_images = response_json['item_list'][0]['images']
     # 只有一张图片：
     if aweme_images is None:
-        is_download = download_photo(
+        download_photo(
             src=response_json['item_list'][0]['image_infos'][0]['label_large']['url_list'][0],
             i=0,
             aweme_id=aweme[0],
             desc=desc,
             author_dir=author_dir)
-        # 下载了
-        if is_download:
-            logger2.info(username + " photo_aweme " + aweme[0] + "\t下载完成")
+    # 多张图片：
     else:
         for i in range(len(aweme_images)):
-            is_download = download_photo(
+            download_photo(
                 src=aweme_images[i]['url_list'][0],
                 i=i,
                 aweme_id=aweme[0],
                 desc=desc,
                 author_dir=author_dir)
-        if is_download:
-            logger2.info(username + " photo_aweme " + aweme[0] + "\t下载完成")
+    logger2.info(username + " photo_aweme " + aweme[0] + "\t下载完成")
 
 
 if __name__ == '__main__':
@@ -139,7 +136,7 @@ if __name__ == '__main__':
             for aweme in user_latest_awme:
                 if aweme['aweme_type'] == 4:
                     new_aweme_id = aweme['aweme_id']
-                    desc = aweme['desc']
+                    desc = re.sub('[\\\\/:*?"<>|\n]', '', aweme['desc'])
                     src = re.sub(
                         'watermark=1',
                         'watermark=0',
@@ -151,6 +148,7 @@ if __name__ == '__main__':
                     user_latest_photos_aweme.append(
                         [aweme['aweme_id'], aweme['desc']])
                     user_latest_photos_aweme_nums += 1
+                    all_user_new_photos_aweme += 1
             # 有视频aweme，则写入txt，并下载视频
             if user_latest_videos_aweme_nums > 0:
                 # 写入txt
@@ -171,4 +169,12 @@ if __name__ == '__main__':
             logger.info(infos)
         else:
             logger.info(f'{user}没有最新的作品')
-        logger.info(user + f"完成,还剩{usernum - i}个")
+        logger.info(user + f"完成,还剩{usernum - i}个\n")
+    alluser_new_video_aweme_num = all_user_new_aweme- all_user_new_photos_aweme
+    if all_user_new_aweme > 0:
+        infos = f'本次任务一共下载了{all_user_new_aweme}个作品,其中'
+        if alluser_new_video_aweme_num > 0:
+            infos += f"{alluser_new_video_aweme_num}个视频作品"
+        if all_user_new_photos_aweme > 0:
+            infos += f"其中{all_user_new_photos_aweme}个图片作品"
+        logger.info(infos)
