@@ -1,3 +1,4 @@
+import os
 import pymysql
 import re
 import requests
@@ -56,10 +57,6 @@ def download_new_videos(user, number, logger, os, sys):
                 os.remove(savepath)
                 sys.exit(0)
             logger[1].info(user + " video_aweme " + video[0:19] + "\t下载完成")
-
-
-def download_photos_aweme(photos_aweme):
-    pass
 
 
 def get_downloadurl(aweme_id):
@@ -135,7 +132,10 @@ def datas_process(userdata):
         if item['aweme_type'] == 4:
             aweme_id = item['aweme_id']
             desc = re.sub('[\\/:*?"<>|\n]', '', item['desc'])
-            src = re.sub('watermark=1', 'watermark=0', item['video']['download_addr']['url_list'][1])
+            src = re.sub(
+                'watermark=1',
+                'watermark=0',
+                item['video']['download_addr']['url_list'][1])
             videos_data.append([aweme_id, desc, src])
         elif item['aweme_type'] == 2:
             photo_aweme_num += 1
@@ -146,6 +146,8 @@ def truncateDataBase():
     # 清空mysql和mongodb数据库中follower_datas表中的数据
     cursor.execute("truncate table followers_datas")
     followers_videos_collection.remove({})
+    for file in os.listdir('followers'):
+        os.remove(f'followers' + os.sep + file)
 
 
 def write2txt(videos_data, user):
