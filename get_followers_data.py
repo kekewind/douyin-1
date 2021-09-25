@@ -1,7 +1,8 @@
 # 获取正在关注的人的所有上传视频
 # https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids=7006608594028334347
+import time
 from utils import *
-logger = log2file('get_followers_data','获取关注全部data',ch=True,mode='w')
+logger = log2file('get_followers_data', '获取关注全部data', ch=True, mode='w')
 
 
 def get_one_page_videos_data(sec_uid, signature, max_cursor):
@@ -10,13 +11,27 @@ def get_one_page_videos_data(sec_uid, signature, max_cursor):
         'accept': 'application/json',
         'user-agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'
     }
-    response = requests.request("GET", url, headers=headers)
+    while True:
+        try:
+            response = requests.request("GET", url, headers=headers)
+        except Exception as e:
+            logger.info(e)
+            time.sleep(6)
+        else:
+            break
     return response.json()
 
 
 def get_one_page_info(sec_uid, max_cursor):
     page_video_data = []
-    signature = requests.get('http://8.9.15.155:3000/sign').text
+    while True:
+        try:
+            signature = requests.get('http://8.9.15.155:3000/sign').text
+        except Exception as e:
+            logger.info(e)
+            time.sleep(5)
+        else:
+            break
     data_json = get_one_page_videos_data(sec_uid, signature, max_cursor)
     if data_json and 'aweme_list' in data_json.keys():
         page_video_data = data_json['aweme_list']
@@ -51,14 +66,14 @@ if __name__ == "__main__":
     all_photo_aweme = 0
     users = []
     user_secid = []
-    # 获得数据库中已经写过的信息
-    # truncateDataBase()
+    # 获得数据库中已经写过的信息和followers目录中的文件
+    truncateDataBase()
     mysql_data, mongodb_data = get_database_videos()
     with open('followers.txt', encoding='utf-8') as f:
         for item in f.readlines():
             user_secid.append(item.rstrip())
     error_user = []
-    for i,item in enumerate(user_secid,start=1):
+    for i, item in enumerate(user_secid, start=1):
         user, sec_id = item.split(':')
         users.append(user)
         user_aweme_datas = []
@@ -107,14 +122,14 @@ if __name__ == "__main__":
         logger.info(f"出错的foller有{len(error_user)}个")
         logger.info("他们是：" + str(error_user)[1:-1])
     else:
-        logger.info("没有出粗的follower")
+        logger.info("没有出错的follower")
     logger.info(f"剔除重名和出错的，一共有{distinct_usersnum}个follower，他们是:")
     for i in range(0, len(distinct_user), 5):
         j = i
         info = ''
         for j in range(j, j + 5):
             try:
-                info += distinct_user[j].ljust(12,' ')
+                info += distinct_user[j].ljust(12, ' ')
             except Exception as e:
                 pass
         logger.info(info)
