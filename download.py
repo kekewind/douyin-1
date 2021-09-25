@@ -139,7 +139,7 @@ def download_favorite():
         aweme_id, desc, src = video.rstrip().split("==")
         if aweme_id not in favorites:
             print(src)
-            print(aweme_id,desc, end='\t')
+            print(aweme_id, desc, end='\t')
             while True:
                 try:
                     response = requests.get(
@@ -166,7 +166,7 @@ def download_photo(src, i, aweme_id, desc, author_dir):
         # 返回没下载
         return False
     response = requests.get(url=src, headers=headers)
-    save_check_photo(filepath,aweme_id,response)
+    save_check_photo(filepath, aweme_id, response)
     # 返回下载了
     return True
 
@@ -215,7 +215,8 @@ def download_aweme_photos():
                 desc=desc,
                 author_dir=author_dir)
 
-def save_check_photo(filepath,aweme_id,response):
+
+def save_check_photo(filepath, aweme_id, response):
     with open(filepath, mode='wb') as f:
         try:
             f.write(response.content)
@@ -227,6 +228,7 @@ def save_check_photo(filepath,aweme_id,response):
         print(aweme_id + "\t下载出错，文件大小不正常，建议检查下程序")
         os.remove(filepath)
         sys.exit(0)
+
 
 if __name__ == '__main__':
     download_favorite()
