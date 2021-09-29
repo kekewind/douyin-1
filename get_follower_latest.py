@@ -174,7 +174,7 @@ if __name__ == '__main__':
     if all_user_new_aweme > 0:
         infos = f'本次任务一共下载了{all_user_new_aweme}个作品,其中'
         if alluser_new_video_aweme_num > 0:
-            infos += f"{alluser_new_video_aweme_num}个视频作品"
+            infos += f"{alluser_new_video_aweme_num}个视频作品\t"
         if all_user_new_photos_aweme > 0:
-            infos += f"其中{all_user_new_photos_aweme}个图片作品"
+            infos += f"{all_user_new_photos_aweme}个图片作品"
         logger.info(infos)
