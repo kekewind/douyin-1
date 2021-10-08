@@ -32,7 +32,7 @@ class douyin():
     def start(self):
         username, sec_id = self.get_username_secuid()
         print(f'这个人用户名是：{username}')
-        _ = input("请输入自定义名称，输入enter表示不需要自定义")
+        _ = input("请输入自定义名称，输入enter表示不需要自定义\n-->")
         if _ == '':
             pass
         else:
@@ -81,7 +81,7 @@ class douyin():
                     self.photo_aweme_num += 1
         self.update_database(username, sec_uid=sec_id)
         print(f'{username}下载完成，一共有{len(self.user_all_awemes)}个作品')
-        print(f'其中有{self.video_aweme_num}个作品')
+        print(f'其中有{self.video_aweme_num}个视频作品')
         if self.photo_aweme_num > 0:
             print(f'有{self.photo_aweme_num}个图片作品')
         else:

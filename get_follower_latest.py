@@ -82,6 +82,7 @@ def download_photo_aweme(aweme, username):
 
 
 if __name__ == '__main__':
+    latests = []
     logger.info("*" * 80)
     logger.info('开始这次任务，获取所有关注的最新作品')
     mysql_data, mongodb_data = get_database_videos()
@@ -108,8 +109,9 @@ if __name__ == '__main__':
                     f'followers/{user}.txt',
                     encoding='utf-8').readlines()]
             try:
-                photos = [photo[0:19] for photo in os.listdir(fr'F:\douyin\images\{user}')]
-            except:
+                photos = [photo[0:19]
+                          for photo in os.listdir(fr'F:\douyin\images\{user}')]
+            except BaseException:
                 photos = []
         except Exception as e:
             logger.info(e)
@@ -134,19 +136,20 @@ if __name__ == '__main__':
             # 写入mysql
             write2mysql(datas_process(user_latest_awme)[0], user, mysql_data)
             for aweme in user_latest_awme:
+                aweme_id = aweme['aweme_id']
+                desc = re.sub('[\\\\/:*?"<>|\n]', '', aweme['desc'])
+                latests.append('    '.join([user,aweme_id,desc]))
                 if aweme['aweme_type'] == 4:
-                    new_aweme_id = aweme['aweme_id']
-                    desc = re.sub('[\\\\/:*?"<>|\n]', '', aweme['desc'])
                     src = re.sub(
                         'watermark=1',
                         'watermark=0',
                         aweme['video']['download_addr']['url_list'][1])
-                    video = new_aweme_id + "==" + desc + "==" + src
+                    video = aweme_id + "==" + desc + "==" + src
                     videos.insert(0, video)
                     user_latest_videos_aweme_nums += 1
                 elif aweme['aweme_type'] == 2:
                     user_latest_photos_aweme.append(
-                        [aweme['aweme_id'], aweme['desc']])
+                        [aweme_id, desc])
                     user_latest_photos_aweme_nums += 1
                     all_user_new_photos_aweme += 1
             # 有视频aweme，则写入txt，并下载视频
@@ -170,11 +173,14 @@ if __name__ == '__main__':
         else:
             logger.info(f'{user}没有最新的作品')
         logger.info(user + f"完成,还剩{usernum - i}个\n")
-    alluser_new_video_aweme_num = all_user_new_aweme- all_user_new_photos_aweme
+    alluser_new_video_aweme_num = all_user_new_aweme - all_user_new_photos_aweme
     if all_user_new_aweme > 0:
         infos = f'本次任务一共下载了{all_user_new_aweme}个作品,其中'
         if alluser_new_video_aweme_num > 0:
-            infos += f"{alluser_new_video_aweme_num}个视频作品\t"
+            infos += f"{alluser_new_video_aweme_num}个视频作品，"
         if all_user_new_photos_aweme > 0:
-            infos += f"{all_user_new_photos_aweme}个图片作品"
+            infos += f"{all_user_new_photos_aweme}个图片作品，"
+        infos += "它们是：\n"
+        for latest in latests:
+            infos += latest + "\n"
         logger.info(infos)
